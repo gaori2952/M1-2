@@ -26,6 +26,7 @@ try {
   await page.getByText("콘텐츠 작업실", { exact: true }).waitFor();
   await page.getByRole("button", { name: "계정 데이터", exact: true }).click();
   await page.locator("#data-list tr").first().waitFor();
+  await page.getByRole("button", { name: "＋ 기록 추가", exact: true }).click();
   await page.locator("#data-date").fill("2026-10-17");
   await page.locator("#data-value").fill("5000");
   await page.locator("#data-memo").fill("브라우저 CRUD 검증");

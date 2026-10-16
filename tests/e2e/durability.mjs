@@ -70,9 +70,7 @@ try {
     "Draft save prevents concurrent editing and navigation",
     async () => {
       const page = await pageForTest();
-      await page
-        .getByRole("button", { name: "대화 기록", exact: true })
-        .click();
+      await page.getByRole("button", { name: "원고함", exact: true }).click();
       await page
         .getByRole("button", { name: "원고 열기", exact: true })
         .first()

@@ -16,6 +16,39 @@ const trends = {
   stable: "유지",
   insufficient_data: "비교 자료 부족",
 };
+const perfLabels = {
+  views: "조회",
+  reach: "도달",
+  likes: "좋아요",
+  comments: "댓글",
+  saves: "저장",
+  shares: "공유",
+};
+function readPerformance() {
+  const perf = {};
+  document.querySelectorAll("[data-perf]").forEach((i) => {
+    perf[i.dataset.perf] = i.value === "" ? null : Number(i.value);
+  });
+  return Object.values(perf).some((v) => v !== null) ? perf : null;
+}
+function perfSummary(perf) {
+  if (!perf) return "";
+  return Object.entries(perfLabels)
+    .filter(([k]) => perf[k] !== null && perf[k] !== undefined)
+    .map(([k, label]) => `${label} ${Number(perf[k]).toLocaleString("ko-KR")}`)
+    .join(" · ");
+}
+// Reactions per view when views are known; otherwise total reactions.
+function perfScore(perf) {
+  if (!perf) return null;
+  const reactions =
+    (perf.likes || 0) +
+    2 * (perf.comments || 0) +
+    3 * (perf.saves || 0) +
+    3 * (perf.shares || 0);
+  if (!reactions && !perf.views) return null;
+  return perf.views ? reactions / perf.views : reactions;
+}
 const state = {
   user: null,
   contents: [],
@@ -124,6 +157,12 @@ function show(view) {
     .querySelectorAll("nav button")
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   if (view === "history") run(loadHistory);
+  if (view === "drafts") run(loadDrafts);
+}
+function highlightNav(view) {
+  document
+    .querySelectorAll("nav button")
+    .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
 }
 document
   .querySelectorAll("[data-view]")
@@ -251,7 +290,7 @@ async function loadSummary() {
     );
     poly.setAttribute("points", segment.join(" "));
     poly.setAttribute("fill", "none");
-    poly.setAttribute("stroke", "#7ea3c7");
+    poly.setAttribute("stroke", "#2563eb");
     poly.setAttribute("stroke-width", "2.5");
     $("#trend-chart").append(poly);
     segment.length = 0;
@@ -284,20 +323,107 @@ async function loadSummary() {
     $("#data-summary").append(node);
   }
 }
+function openContentForm(title) {
+  $("#content-form-title").textContent = title;
+  $("#content-form").hidden = false;
+  $("#content-text").focus();
+}
+function closeContentForm() {
+  $("#content-form").reset();
+  document
+    .querySelectorAll("#content-form details")
+    .forEach((d) => (d.open = false));
+  $("#content-id").value = "";
+  $("#content-form").hidden = true;
+}
+$("#content-new").onclick = () => {
+  closeContentForm();
+  openContentForm("새 원고");
+};
+$("#content-close").onclick = closeContentForm;
+$("#content-search").addEventListener("input", () => renderContents());
 async function loadContents() {
   state.contents = await api("/api/contents");
   renderSources();
+  renderContents();
+  renderTop();
+}
+function rankedContents() {
+  return state.contents
+    .map((c) => ({ c, score: perfScore(c.performance) }))
+    .filter((r) => r.score !== null)
+    .sort((a, b) => b.score - a.score)
+    .map((r) => r.c);
+}
+function recommendFrom(items) {
+  if (state.busy) return notice("현재 답변이 끝난 뒤 다시 눌러 주세요.");
+  const ids = new Set(items.map((c) => c.id));
+  document
+    .querySelectorAll("[data-source]")
+    .forEach((box) => (box.checked = ids.has(box.dataset.source)));
+  $("#mode").value = "ideas";
+  const names = items.map((c) => `「${c.title}」`).join(", ");
+  $("#message").value =
+    `${names}의 게시물 성과(${items.map((c) => perfSummary(c.performance)).join(" / ")})를 근거로, ` +
+    "반응이 좋았던 점을 살려 업데이트하거나 이어서 만들 주제 3개를 추천해줘. 어떤 수치를 근거로 했는지도 알려줘.";
+  run(() => send());
+}
+function renderTop() {
+  const ranked = rankedContents();
+  $("#top-list").replaceChildren();
+  $("#recommend-top").disabled = !ranked.length;
+  ranked.slice(0, 3).forEach((c, i) => {
+    const card = el("article", undefined, "top-card");
+    card.append(
+      el("span", `TOP ${i + 1}`, "eyebrow"),
+      el("h3", c.title),
+      el("small", perfSummary(c.performance), "perf-line"),
+      button("이 콘텐츠로 추천", () => recommendFrom([c])),
+    );
+    $("#top-list").append(card);
+  });
+  if (!ranked.length) {
+    const empty = el("div", undefined, "empty-small");
+    empty.append(
+      el(
+        "span",
+        "아직 성과가 입력된 콘텐츠가 없어요. 라이브러리에서 원고마다 인사이트 수치(조회·저장·공유 등)를 입력하면 여기에 순위가 나타나요. ",
+      ),
+    );
+    const go = el("button", "라이브러리로 가기 →", "text-button");
+    go.type = "button";
+    go.addEventListener("click", () => show("library"));
+    empty.append(go);
+    $("#top-list").append(empty);
+  }
+}
+$("#recommend-top").onclick = () => recommendFrom(rankedContents().slice(0, 3));
+function renderContents() {
+  const q = $("#content-search").value.trim().toLowerCase();
+  const items = state.contents.filter(
+    (c) =>
+      !q ||
+      [c.title, c.text, c.tags.join(" ")].join(" ").toLowerCase().includes(q),
+  );
+  $("#content-total").textContent = q
+    ? `${items.length} / ${state.contents.length}개`
+    : `${state.contents.length}개 원고`;
   $("#content-list").replaceChildren();
-  for (const c of state.contents) {
+  for (const c of items) {
     const card = el("article", undefined, "card");
     card.append(
       el("h3", c.title),
       el(
         "small",
-        `${c.tags.join(" · ")} · 게시: ${c.publication_status} · 검토: ${c.review_status}`,
+        `${c.tags.join(" · ")} · ${{ published: "게시함", unpublished: "미게시" }[c.publication_status] || "게시 미확인"} · ${c.review_status === "verified" ? "검토 완료" : "검토 미확인"}`,
         "muted",
       ),
       el("p", c.text.slice(0, 220) + (c.text.length > 220 ? "…" : "")),
+      el(
+        "small",
+        c.performance ? `성과 · ${perfSummary(c.performance)}` : "성과 미입력",
+        c.performance ? "perf-line" : "muted",
+      ),
       el("small", `출처: ${c.source || "직접 입력 / 미확인"}`, "muted"),
     );
     const actions = el("div", undefined, "actions");
@@ -314,7 +440,16 @@ async function loadContents() {
           date: c.published_at || "",
         }))
           $(`#content-${field}`).value = value;
-        $("#content-title").focus();
+        document.querySelectorAll("[data-perf]").forEach((i) => {
+          i.value = c.performance?.[i.dataset.perf] ?? "";
+        });
+        $("#content-more-perf").open = !!c.performance;
+        $("#content-more-info").open = !!(
+          c.tags.length ||
+          c.published_at ||
+          c.publication_status !== "unknown"
+        );
+        openContentForm("원고 수정");
       }),
       button("삭제", async () => {
         if (!confirm("이 원고 자료를 삭제할까요? 기존 생성 원고는 유지됩니다."))
@@ -327,21 +462,71 @@ async function loadContents() {
     card.append(actions);
     $("#content-list").append(card);
   }
-  if (!state.contents.length)
-    $("#content-list").append(
-      el(
-        "p",
-        "첫 원고를 등록해 나만의 제작 맥락을 만들어 보세요.",
-        "empty-small",
-      ),
-    );
+  if (q && !items.length)
+    $("#content-list").append(el("p", "검색 결과가 없어요.", "empty-small"));
+  if (!state.contents.length) $("#content-list").append(libraryGuide());
+}
+function libraryGuide() {
+  const guide = el("section", undefined, "guide");
+  guide.append(
+    el("h2", "라이브러리는 이렇게 시작하세요"),
+    el(
+      "p",
+      "여기에 모은 원고가 AI 추천과 원고 작성의 근거가 돼요. 완벽하게 정리하지 않아도 괜찮아요.",
+      "muted",
+    ),
+  );
+  const steps = [
+    [
+      "1",
+      "게시했던 원고를 붙여넣기",
+      "카드뉴스 문구를 통째로 붙여넣으면 첫 줄이 제목이 돼요. 나머지 칸은 비워도 돼요.",
+      "＋ 원고 붙여넣기",
+      () => $("#content-new").click(),
+    ],
+    [
+      "2",
+      "반응 좋았던 게시물에 성과 적기",
+      "인사이트의 조회·저장·공유만 적어도 작업실에 성과 순위가 생겨요.",
+    ],
+    [
+      "3",
+      "작업실에서 다음 주제 추천받기",
+      "성과 상위 콘텐츠를 근거로 업데이트·후속 주제를 받아요.",
+      "작업실로 가기 →",
+      () => show("studio"),
+    ],
+  ];
+  const list = el("ol", undefined, "guide-steps");
+  for (const [n, title, body, label, action] of steps) {
+    const li = el("li");
+    li.append(el("span", n, "step-num"));
+    const text = el("div");
+    text.append(el("strong", title), el("p", body, "muted"));
+    if (label) {
+      const b = el("button", label, n === "1" ? "primary" : "text-button");
+      b.type = "button";
+      b.addEventListener("click", action);
+      text.append(b);
+    }
+    li.append(text);
+    list.append(li);
+  }
+  guide.append(list);
+  return guide;
 }
 bindForm("#content-form", async () => {
   const id = $("#content-id").value;
   await api("/api/contents" + (id ? "/" + id : ""), {
     method: id ? "PUT" : "POST",
     body: {
-      title: $("#content-title").value,
+      title:
+        $("#content-title").value.trim() ||
+        $("#content-text")
+          .value.split("\n")
+          .map((s) => s.replace(/^[#\s*-]+/, "").trim())
+          .find(Boolean)
+          .slice(0, 80),
       text: $("#content-text").value,
       tags: $("#content-tags")
         .value.split(",")
@@ -351,10 +536,10 @@ bindForm("#content-form", async () => {
       kind: $("#content-kind").value,
       publication_status: $("#content-publication").value,
       published_at: $("#content-date").value || null,
+      performance: readPerformance(),
     },
   });
-  $("#content-form").reset();
-  $("#content-id").value = "";
+  closeContentForm();
   await loadContents();
   notice("원고 자료를 저장했어요. 수정된 내용은 검토 미확인 상태입니다.");
 });
@@ -375,6 +560,49 @@ function resetData() {
   $("#data-date").disabled = false;
   $("#data-metric").disabled = false;
 }
+function openDataForm(title) {
+  $("#data-form-title").textContent = title;
+  $("#data-form").hidden = false;
+}
+$("#data-new").onclick = () => {
+  resetData();
+  $("#data-date").value = new Date().toISOString().slice(0, 10);
+  $("#data-metric").value = $("#filter-metric").value;
+  openDataForm("기록 추가");
+  $("#data-value").focus();
+};
+$("#data-close").onclick = () => {
+  resetData();
+  $("#data-form").hidden = true;
+};
+function markRange(range) {
+  document
+    .querySelectorAll("[data-range]")
+    .forEach((b) => b.classList.toggle("active", b.dataset.range === range));
+}
+document.querySelectorAll("[data-range]").forEach((b) =>
+  b.addEventListener("click", () =>
+    run(async () => {
+      const range = b.dataset.range;
+      if (range === "all") {
+        $("#filter-start").value = "";
+        $("#filter-end").value = "";
+      } else {
+        const end = new Date(
+          (state.latestDate || new Date().toISOString().slice(0, 10)) +
+            "T00:00:00Z",
+        );
+        const start = new Date(end);
+        start.setUTCDate(end.getUTCDate() - Number(range) + 1);
+        $("#filter-start").value = start.toISOString().slice(0, 10);
+        $("#filter-end").value = end.toISOString().slice(0, 10);
+      }
+      state.limit = 100;
+      await loadData();
+      markRange(range);
+    }, b),
+  ),
+);
 function renderData() {
   $("#data-list").replaceChildren();
   const filtered = state.data.filter(
@@ -401,6 +629,7 @@ function renderData() {
         $("#data-metric").disabled = true;
         $("#data-value").value = d.value ?? "";
         $("#data-memo").value = d.memo;
+        openDataForm(`기록 수정 · ${d.date}`);
       }),
       button("삭제", async () => {
         if (!confirm("이 데이터 기록을 삭제할까요?")) return;
@@ -422,6 +651,11 @@ function renderData() {
 }
 async function loadData() {
   state.data = (await api("/api/data" + query())).reverse();
+  if (!query() && state.data.length)
+    state.latestDate = state.data.reduce(
+      (a, d) => (d.date > a ? d.date : a),
+      "",
+    );
   renderData();
   await loadSummary();
 }
@@ -446,6 +680,7 @@ bindForm("#data-form", async () => {
     body,
   });
   resetData();
+  $("#data-form").hidden = true;
   await loadData();
   notice("데이터를 저장하고 요약을 갱신했어요.");
 });
@@ -453,6 +688,7 @@ $("#data-reset").onclick = resetData;
 bindForm("#filter-form", async () => {
   state.limit = 100;
   await loadData();
+  markRange(null);
   notice("선택 기간을 작업실 요약과 채팅에도 적용했어요.");
 });
 $("#clear-filter").onclick = () =>
@@ -460,6 +696,7 @@ $("#clear-filter").onclick = () =>
     $("#filter-start").value = "";
     $("#filter-end").value = "";
     await loadData();
+    markRange(null);
   });
 function download(name, data, type = "application/json") {
   const url = URL.createObjectURL(
@@ -475,12 +712,107 @@ function download(name, data, type = "application/json") {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $("#export-data").onclick = () => download("account-data.json", state.data);
+const prefGroups = {
+  독자: ["중학생", "고등학생", "공학 입문 대학생", "일반 성인", "전공자"],
+  "설명 순서": [
+    "직관 → 정의 → 예시",
+    "질문으로 시작",
+    "일상 비유 먼저",
+    "정의 → 유도 → 예시",
+  ],
+  문체: [
+    "친근한 존댓말",
+    "간결한 개조식",
+    "과장 표현 금지",
+    "전문 용어는 풀어서",
+  ],
+  수식: ["수식은 최소한으로", "수식마다 적용 조건 명시", "단위 항상 표기"],
+  "카드 구성": [
+    "카드 한 장에 개념 하나",
+    "첫 카드는 궁금증을 여는 질문",
+    "마지막 카드는 요약",
+    "그림 지시는 구체적으로",
+  ],
+  퀴즈: ["개념 이해형", "간단한 계산형", "오답마다 이유 설명", "실생활 적용형"],
+};
+const prefSelected = {};
+function composePreferences() {
+  const box = $("#profile-instructions");
+  const generated = Object.entries(prefSelected)
+    .filter(([, values]) => values.size)
+    .map(([group, values]) => `- ${group}: ${[...values].join(", ")}`);
+  const custom = box.value
+    .split("\n")
+    .filter(
+      (line) =>
+        line.trim() &&
+        !Object.keys(prefGroups).some((g) => line.startsWith(`- ${g}:`)),
+    );
+  box.value = [...generated, ...custom].join("\n");
+}
+function renderPrefBuilder() {
+  $("#pref-builder").replaceChildren();
+  for (const [group, options] of Object.entries(prefGroups)) {
+    prefSelected[group] ||= new Set();
+    const row = el("div", undefined, "pref-row");
+    row.append(el("span", group, "pref-label"));
+    const chips = el("div", undefined, "chips");
+    for (const option of options) {
+      const chip = el("button", option, "chip");
+      chip.type = "button";
+      chip.setAttribute("aria-pressed", prefSelected[group].has(option));
+      chip.addEventListener("click", () => {
+        const set = prefSelected[group];
+        set.has(option) ? set.delete(option) : set.add(option);
+        chip.setAttribute("aria-pressed", set.has(option));
+        composePreferences();
+      });
+      chips.append(chip);
+    }
+    row.append(chips);
+    $("#pref-builder").append(row);
+  }
+}
+function syncPrefBuilder(text) {
+  for (const group of Object.keys(prefGroups)) {
+    const line = text.split("\n").find((l) => l.startsWith(`- ${group}:`));
+    prefSelected[group] = new Set(
+      line
+        ? line
+            .slice(group.length + 3)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+    );
+  }
+  renderPrefBuilder();
+}
+const seriesTemplates = [
+  "이전 편 내용을 한 줄로 상기시키며 시작",
+  "편마다 같은 카드 구성 유지",
+  "다음 편 예고로 마무리",
+  "수식보다 비유를 먼저",
+];
+for (const text of seriesTemplates) {
+  const chip = el("button", "+ " + text, "chip");
+  chip.type = "button";
+  chip.addEventListener("click", () => {
+    const box = $("#series-instructions");
+    if (!box.value.includes(text))
+      box.value =
+        (box.value.trim() ? box.value.trim() + "\n" : "") + "- " + text;
+  });
+  $("#series-templates").append(chip);
+}
+renderPrefBuilder();
 async function loadPreferences() {
   const [profile, series] = await Promise.all([
     api("/api/profile"),
     api("/api/series"),
   ]);
   $("#profile-instructions").value = profile.instructions;
+  syncPrefBuilder(profile.instructions || "");
   $("#style-preview").textContent =
     profile.instructions || "확인한 제작 선호가 아직 없어요.";
   state.series = series;
@@ -640,12 +972,8 @@ async function loadConversation(id) {
   notice("이전 대화를 불러왔어요.");
 }
 async function loadHistory() {
-  const [history, drafts] = await Promise.all([
-    api("/api/conversations"),
-    api("/api/drafts"),
-  ]);
+  const history = await api("/api/conversations");
   $("#history-list").replaceChildren();
-  $("#draft-list").replaceChildren();
   for (const c of history) {
     const card = el("article", undefined, "card");
     card.append(
@@ -687,18 +1015,38 @@ async function loadHistory() {
         "empty-small",
       ),
     );
+}
+async function loadDrafts() {
+  const drafts = await api("/api/drafts");
+  $("#draft-list").replaceChildren();
   for (const d of drafts) {
     const card = el("article", undefined, "card");
+    const reviewed = d.status === "reviewed";
     card.append(
-      el("h3", d.draft.title),
       el(
-        "p",
-        `버전 ${d.version} · ${d.status === "reviewed" ? "사용자 검토 완료" : "검토할 초안"}`,
+        "span",
+        reviewed ? "검토 완료" : "검토 필요",
+        reviewed ? "tag done" : "tag",
       ),
-      button("원고 열기", () => openDraft(d.id)),
+      el("h3", d.draft.title),
+      el("p", d.draft.objective, "muted"),
+      el(
+        "small",
+        `카드 ${d.draft.cards.length}장 · 버전 ${d.version}`,
+        "muted",
+      ),
+      button("원고 열기", () => openDraft(d.id), "primary"),
     );
     $("#draft-list").append(card);
   }
+  if (!drafts.length)
+    $("#draft-list").append(
+      el(
+        "p",
+        "아직 원고가 없어요. 작업실에서 주제를 추천받고 '이 주제로 원고 만들기'를 눌러 보세요.",
+        "empty-small",
+      ),
+    );
 }
 function field(label, value, change, options = {}) {
   const wrapper = el("label", label);
@@ -722,6 +1070,7 @@ async function openDraft(id, internal = false) {
     document.querySelectorAll(".view").forEach((s) => {
       s.hidden = s.id !== "draft-editor";
     });
+    highlightNav("drafts");
     return;
   }
   if (
@@ -740,6 +1089,7 @@ function renderDraft() {
   const d = state.draft.draft;
   document.querySelectorAll(".view").forEach((s) => (s.hidden = true));
   $("#draft-editor").hidden = false;
+  highlightNav("drafts");
   $("#draft-fields").replaceChildren();
   $("#draft-state").textContent =
     `v${state.draft.version} · ${state.draft.status === "reviewed" ? "사용자 검토 완료" : "검토할 초안"}`;
@@ -919,6 +1269,7 @@ async function session(user) {
     $("#draft-fields").replaceChildren();
     for (const id of [
       "content-list",
+      "top-list",
       "history-list",
       "draft-list",
       "series-list",
@@ -928,6 +1279,7 @@ async function session(user) {
     $("#content-form").reset();
     resetData();
     $("#profile-form").reset();
+    syncPrefBuilder("");
     $("#series-form").reset();
     $("#message").value = "";
     $("#open-draft").hidden = true;

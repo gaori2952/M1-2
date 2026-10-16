@@ -1,4 +1,5 @@
-import { mkdir, writeFile, copyFile } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 const root = new URL("./", import.meta.url);
 const raw = JSON.parse(process.env.FIREBASE_WEB_CONFIG || "{}");
 const allowed = [
@@ -44,4 +45,17 @@ for (const file of [
   "config.js",
 ])
   await copyFile(new URL(file, root), new URL(`public/${file}`, root));
+// Version asset URLs so browsers pick up new CSS/JS after each build.
+const hash = createHash("sha256");
+for (const file of ["styles.css", "app.js", "api.js", "auth.js", "config.js"])
+  hash.update(await readFile(new URL(file, root)));
+const version = hash.digest("hex").slice(0, 10);
+const html = await readFile(new URL("index.html", root), "utf8");
+await writeFile(
+  new URL("public/index.html", root),
+  html.replace(
+    /(href|src)="(styles\.css|app\.js|config\.js)"/g,
+    `$1="$2?v=${version}"`,
+  ),
+);
 console.log("Built static frontend with public configuration only.");
