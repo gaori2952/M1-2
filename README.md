@@ -7,9 +7,9 @@
 
 로컬에서 **실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)에 연결해 검증**했습니다. Render·Vercel 배포는 아직 하지 않았습니다.
 
-- 프론트 URL: 미배포 (로컬: http://localhost:3000)
-- 백엔드 API URL: 미배포 (로컬: http://localhost:8000)
-- Swagger URL: 미배포 (로컬: http://localhost:8000/docs)
+- 프론트 URL: (로컬: http://localhost:3000)
+- 백엔드 API URL: (로컬: http://localhost:8000)
+- Swagger URL:  (로컬: http://localhost:8000/docs)
 
 [아키텍처](docs/architecture.md) · [구현 계획](docs/implementation-plan.md) · [검증 결과와 제한](docs/verification.md)
 
