@@ -28,6 +28,17 @@ class MetricUpdate(Input):
     memo: str = Field(default="", max_length=2000)
 
 
+class Performance(Input):
+    """Per-post metrics the user copies from platform insights. Empty means unknown."""
+
+    views: Value = None
+    reach: Value = None
+    likes: Value = None
+    comments: Value = None
+    saves: Value = None
+    shares: Value = None
+
+
 class ContentInput(Input):
     title: Short
     text: str = Field(min_length=1, max_length=20000)
@@ -38,6 +49,7 @@ class ContentInput(Input):
     publication_status: Literal["unknown", "published", "unpublished"] = "unknown"
     published_at: Date | None = None
     source: str = Field(default="", max_length=1000)
+    performance: Performance | None = None
 
 
 class MessageInput(Input):

@@ -132,6 +132,7 @@ def test_search_and_content_ownership(env):
     assert select_contents("열역학", items, [cid])[0]["id"] == cid
     with pytest.raises(Exception):
         select_contents("x", items, ["missing"])
+
     assert (
         c.put(
             "/api/contents/" + cid,
@@ -198,3 +199,16 @@ def test_no_configuration_never_bypasses_auth():
     c = TestClient(create_app(Settings()))
     assert c.get("/api/data").status_code == 401
     assert c.get("/api/data", headers=auth()).status_code == 503
+
+
+def test_content_performance_round_trip_and_validation(env):
+    c, _ = env
+    body = {"title": "전위", "text": "본문", "performance": {"views": 1200, "saves": 0}}
+    r = c.post("/api/contents", headers=auth(), json=body)
+    assert r.status_code == 201
+    perf = r.json()["performance"]
+    assert perf["views"] == 1200 and perf["saves"] == 0 and perf["shares"] is None
+    bad = body | {"performance": {"views": -1}}
+    assert c.post("/api/contents", headers=auth(), json=bad).status_code == 422
+    unknown = body | {"performance": {"followers": 3}}
+    assert c.post("/api/contents", headers=auth(), json=unknown).status_code == 422
