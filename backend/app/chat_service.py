@@ -64,7 +64,7 @@ def run_chat(db, generator, settings, uid, request):
         quota = tx.get("quotas", qid) or {"count": 0}
         if conversation and conversation.get("busy_until", 0) > stamp:
             raise HTTPException(409, "이 대화에서 답변을 생성 중입니다.")
-        if conversation and conversation["message_count"] >= 100:
+        if conversation and conversation["message_count"] + 2 > 100:
             raise HTTPException(409, "대화가 길어졌습니다. 새 대화를 시작하세요.")
         if quota["count"] >= settings.daily_request_limit:
             raise HTTPException(429, "오늘의 AI 요청 한도를 사용했습니다. UTC 자정에 초기화됩니다.")
@@ -187,6 +187,16 @@ def run_chat(db, generator, settings, uid, request):
 
         return db.atomic(finish)
     except Exception as error:
+        # A commit can succeed even when its acknowledgment is lost.
+        # Recover the saved result before claiming failure or permitting a new attempt.
+        try:
+            completed = db.get("requests", rid)
+        except Exception:
+            raise HTTPException(
+                503, "저장 결과를 확인할 수 없습니다. 입력을 유지하고 같은 요청으로 재시도하세요."
+            ) from None
+        if completed and completed["status"] == "done":
+            return completed["response"]
 
         def fail(tx):
             reservation = tx.get("requests", rid)
@@ -203,7 +213,12 @@ def run_chat(db, generator, settings, uid, request):
                         conv | {"busy_until": 0, "active_request": None},
                     )
 
-        db.atomic(fail)
+        try:
+            db.atomic(fail)
+        except Exception:
+            raise HTTPException(
+                503, "저장 결과를 확인할 수 없습니다. 입력을 유지하고 같은 요청으로 재시도하세요."
+            ) from None
         if isinstance(error, HTTPException):
             raise
         raise HTTPException(

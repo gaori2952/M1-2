@@ -1,6 +1,6 @@
 # 개인화 콘텐츠 제작 비서 아키텍처
 
-이 문서는 구현 목표입니다. 현재 동작하는 시스템을 설명하는 문서는 아닙니다.
+현재 로컬 구현의 역할과 데이터 흐름입니다. 실제 Firebase·OpenAI 연결과 Render·Vercel 배포는 키 준비 후 검증해야 합니다.
 
 ## 각 구성 요소의 역할
 
@@ -58,7 +58,9 @@ ChatGPT 프로젝트의 자료는 자동 접근할 수 있다고 가정하지 �
 - profiles: 확인된 일반 선호
 - series: 시리즈별 규칙
 - drafts: 생성 초안과 수정 버전
-- feedback: 수정 내용과 선호 반영 확인 여부
+- feedback: 수정 전후 원고와 사용자 메모 (선호 자동 반영 없음)
+- requests: 요청 예약·완료 응답·삭제 tombstone
+- quotas: UTC 날짜별 사용자 모델 호출 시도 횟수
 
 Admin SDK는 Firestore 보안 규칙을 우회하므로 모든 API의 목록·단건 조회·수정·삭제에서 소유권을 검사합니다. 초기에는 브라우저의 Firestore 직접 접근을 차단합니다.
 
@@ -76,7 +78,7 @@ Admin SDK는 Firestore 보안 규칙을 우회하므로 모든 API의 목록·�
 - DELETE /api/conversations/{id}
 
 POST /api/chat은 summary API와 동일한 서비스 함수로 통계를 얻고, 프롬프트에 주입해 AI를 호출한 뒤 대화를 자동 저장합니다.
-추가 제작·피드백 API의 계약은 구현 단계에서 정의합니다.
+추가 계약은 `/docs`에 정의되어 있습니다. 프로필·시리즈 저장은 confirmed=true를 요구하며 원고 수정은 version 일치 여부를 검사합니다.
 
 ## 데이터와 생성의 한계
 

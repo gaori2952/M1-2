@@ -259,3 +259,35 @@ def test_series_context_and_wrong_draft_shape(chat_env):
     changed["cards"] = changed["cards"][:4]
     g.result = reply() | {"draft": changed}
     assert ask(c, mode="draft", selected_idea=idea()).status_code == 502
+
+
+def test_commit_ack_loss_replays_success_without_second_generation(chat_env):
+    c, db, g = chat_env
+    atomic = db.atomic
+    lost = []
+
+    def ambiguous(fn):
+        result = atomic(fn)
+        if fn.__name__ == "finish" and not lost:
+            lost.append(True)
+            raise OSError("acknowledgment lost after commit")
+        return result
+
+    db.atomic = ambiguous
+    rid = str(uuid4())
+    result = ask(c, request_id=rid)
+    assert result.status_code == 200, result.text
+    assert ask(c, request_id=rid).json() == result.json()
+    assert len(g.calls) == 1
+    assert len(c.get("/api/conversations", headers=auth()).json()) == 1
+
+
+def test_chat_cannot_exceed_conversation_message_limit(chat_env):
+    c, db, g = chat_env
+    from app.repository import create
+
+    conv = create(
+        db, "conversations", "alice", {"title": "full", "message_count": 99, "version": 1}
+    )
+    assert ask(c, conversation_id=conv["id"]).status_code == 409
+    assert not g.calls

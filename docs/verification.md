@@ -5,9 +5,12 @@
 ## 완료한 검증
 
 - Python 3.12 가상환경, FastAPI /docs 및 /health.
-- pytest: 인증 없음/잘못된 토큰/허용 UID, 소유자 격리, 입력 검증, CRUD, 통계, 원고 검색, 대화 저장·삭제, 생성 구조, 재요청·동시 요청, 일일 제한, 저장 실패, 초안 버전 충돌, 수정 피드백, 명시적 선호 저장.
-- Playwright + Chrome: 데이터 추가, 채팅, 주제 후보 3개, 카드 6장, 초안 수정·저장, 새로고침 복원, 대화 불러오기, 악성 HTML 문자열 비실행, 390px 모바일 가로 넘침 검사.
-- 정적 프론트 빌드: 공개 설정만 생성. 운영 설정은 백엔드와 별도.
+- pytest: 31개 통과. 인증 없음/잘못된 토큰/허용 UID, 소유자 격리, 입력 검증, CRUD, 통계, 원고 검색, 대화 저장·삭제, 생성 구조, 재요청·동시 요청, 일일 제한, 저장 실패, 초안 버전 충돌, 수정 피드백, 명시적 선호 저장.
+- Playwright + Chrome: 기본 흐름 1개 및 저장/재시도 회귀 시나리오 3개 통과. 데이터 추가, 채팅, 주제 후보 3개, 카드 6장, 초안 수정·저장, 새로고침 복원, 대화 불러오기, 악성 HTML 문자열 비실행, 390px 모바일 가로 넘침 검사.
+- 정적 프론트 빌드: 공개 설정만 생성. 빌드 격리/설정 거부 테스트 2개 통과. 운영 설정은 백엔드와 별도.
+- 실제 OpenAI SDK를 HTTP 전송 경계에서만 대체해 구조화 스키마, 토큰 제한, store=false, 자동 재호출 없음 확인.
+- 코드 리뷰에서 발견한 commit 응답 유실 시 중복 생성, 같은 초안 재열기/저장 중 편집 유실을 실패 테스트로 재현한 뒤 수정. 99개 메시지에서 101개로 초과하는 경계도 차단.
+- 테스트 도구에서 httpx 사용의 Starlette deprecation warning 1개가 발생합니다. 테스트 실패는 아니며 운영 요청에는 해당하지 않습니다.
 - M1-1 고정 커밋 CSV 파싱: 139일, 834슬롯, 유효 수치 833개, 결측 1개. CSV 수치는 `1110.00000000` 형식이므로 정수와 동등한 소수 표현만 허용하고 실제 소수는 거부.
 - 재수입 시 기존 ID와 사용자 수정 보존.
 
@@ -52,3 +55,6 @@ Firestore 어댑터는 공식 SDK 트랜잭션을 사용하지만 메모리 저�
 - [Firebase ID 토큰 검증](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
 - [Firestore 트랜잭션](https://firebase.google.com/docs/firestore/manage-data/transactions)
 - [Firebase 웹 모듈 설정](https://firebase.google.com/docs/web/setup)
+
+- [Render FastAPI 배포](https://render.com/docs/deploy-fastapi)
+- [Vercel 빌드 설정](https://vercel.com/docs/builds/configure-a-build)

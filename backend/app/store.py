@@ -39,6 +39,7 @@ class FirestoreUnit:
         return snap.to_dict() if snap.exists else None
 
     def list(self, collection, uid):
+        # shortcut: owner-scoped scans suit a personal library; add indexed pagination before 10k documents.
         query = (
             self.db.collection(collection)
             .where(filter=FieldFilter("owner_uid", "==", uid))

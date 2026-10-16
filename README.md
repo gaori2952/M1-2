@@ -146,8 +146,9 @@ ruff format --check backend
 브라우저 테스트에는 Playwright Chromium이 필요합니다.
 
 ```bash
-npm install --no-save playwright
-npx playwright install chromium
+corepack enable
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 # 터미널 1: 합성 자료 + 모의 모델 전용 서버
 PYTHONPATH=backend python -m uvicorn tests.preview:app --host 127.0.0.1 --port 18100
 # 터미널 2: 테스트용 공개 API 주소로 빌드 후 정적 서버
@@ -155,10 +156,12 @@ API_BASE_URL=http://127.0.0.1:18100 node frontend/build-config.mjs
 python -m http.server 18101 --bind 127.0.0.1 --directory frontend/public
 # 터미널 3
 node tests/e2e/flow.mjs
+node tests/e2e/durability.mjs
+node --test tests/build.test.mjs
 ```
 
 E2E는 임시 브라우저에서 `auth.js`만 대체합니다. 운영 코드에 인증 우회 플래그는 없습니다.
-테스트용 서버는 외부에 배포하지 마세요. 반복 테스트는 새 preview 서버로 시작하세요.
+테스트용 서버는 외부에 배포하지 마세요. 반복 테스트는 새 preview 서버로 시작하세요. durability 테스트는 flow 테스트가 생성한 원고와 대화를 이어서 사용합니다.
 
 ## 배포 준비
 
