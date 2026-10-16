@@ -1,29 +1,41 @@
-# 결 · 나를 아는 콘텐츠 제작 비서
+# Contents · 성과에서 시작하는 콘텐츠 제작 작업실
 
-기존 원고와 확인된 제작 선호를 참고해 **후속 주제 → 카드뉴스 원고 → 퀴즈 → 수정·보관**을 연결하는 개인 AI 작업실입니다.
-[M1-1](https://github.com/gaori2952/M1-1)의 시계열은 계정 상황을 이해하는 보조 근거로 사용합니다. 계정 지표만으로 특정 게시물의 성공 원인을 단정하지 않습니다.
+반응이 좋았던 게시물과 내가 확인한 제작 기준을 근거로 **업데이트·후속 주제 추천 → 카드뉴스 원고 → 퀴즈 → 수정·보관**을 한 흐름으로 잇는 개인 AI 작업실입니다.
+게시물별 성과는 사용자가 인사이트에서 옮겨 적은 수치를 쓰고, [M1-1](https://github.com/gaori2952/M1-1)의 계정 일별 시계열은 계정 상황을 이해하는 보조 근거로만 씁니다. 지표의 원인을 단정하지 않습니다.
 
 ## 현재 상태
 
-로컬 구현 및 자동 테스트를 완료한 초기 버전입니다. **Firebase·OpenAI 실제 연결과 Render·Vercel 배포는 아직 수행하지 않았습니다.**
-키 미설정 상태에서는 화면과 Swagger를 열 수 있지만 로그인·데이터·생성 기능을 실제 서비스로 사용할 수 없습니다.
+로컬에서 **실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)에 연결해 검증**했습니다. Render·Vercel 배포는 아직 하지 않았습니다.
 
-- 프론트 URL: 미배포
-- 백엔드 API URL: 미배포
+- 프론트 URL: 미배포 (로컬: http://localhost:3000)
+- 백엔드 API URL: 미배포 (로컬: http://localhost:8000)
 - Swagger URL: 미배포 (로컬: http://localhost:8000/docs)
 
 [아키텍처](docs/architecture.md) · [구현 계획](docs/implementation-plan.md) · [검증 결과와 제한](docs/verification.md)
 
+## 화면 구성
+
+| 메뉴 | 하는 일 |
+| --- | --- |
+| **작업실** | 성과 상위 콘텐츠 TOP 3를 보여주고, 그 수치를 근거로 업데이트·후속 주제 3개를 추천받아 바로 카드뉴스 원고로 만듭니다. 자유 질문·데이터 상담도 가능합니다. |
+| **원고함** | 생성한 원고를 열어 카드·수식·퀴즈를 다듬고, 직접 검토 완료 표시 후 JSON·Markdown으로 내려받습니다. |
+| **콘텐츠 라이브러리** | 원고를 붙여넣기만 하면 첫 줄이 제목이 됩니다. 게시물 성과(조회·도달·좋아요·댓글·저장·공유)와 분류 정보는 필요할 때만 펼쳐 입력합니다. 검색 지원. |
+| **계정 데이터** | 계정 일별 지표 조회·추가·수정. 최근 7일·30일·90일·전체 빠른 기간, 0과 결측 구분, 이전 동일 기간 비교. |
+| **대화 기록** | 저장된 대화를 불러오거나 삭제합니다. |
+| **제작 선호** | 독자·설명 순서·문체·수식·카드 구성·퀴즈 항목을 눌러 고르면 지시문이 자동 작성됩니다. 시리즈별 규칙은 자주 쓰는 문구 버튼으로 채웁니다. 확인 후 저장한 내용만 적용됩니다. |
+
 ## 구현한 기능
 
-- Google 로그인 + 허용 UID 검사, 모든 데이터 소유권 검사
+- Google 로그인 + 허용 UID 검사, 모든 데이터 소유권 검사, 브라우저의 Firestore 직접 접근 차단
+- 게시물별 성과 입력과 성과 순위(조회 대비 반응, 저장·공유 가중), 성과 근거를 밝히는 추천 프롬프트
 - 시계열 CRUD, 유효 관측·결측 분리, 이전 동일 기간과 비교하는 요약
-- 원고 라이브러리 CRUD, 선택 원고 또는 키워드 검색
-- 일반 선호와 시리즈별 규칙의 명시적 확인·저장
-- 데이터·근거·선호를 주입한 채팅, 후속 후보 3개, 카드 4~10장과 객관식 퀴즈
-- 응답 구조·근거 ID 검사, 요청 중복 방지, 일일 요청 한도
-- 대화 자동 저장·불러오기·삭제, 초안 수정과 버전 충돌 방지, 피드백 보관
-- 반응형 바닐라 화면, 로딩/오류 안내, 그래프, JSON/Markdown 다운로드, 다크 모드
+- 원고 라이브러리 CRUD, 선택 원고 또는 키워드 검색(최대 5개, 원고당 12,000자)
+- 일반 선호와 시리즈별 규칙의 명시적 확인·저장(수정 기록이 자동으로 선호가 되지 않음)
+- 후속 후보 정확히 3개, 카드 4~10장과 4지선다 퀴즈, 사람이 확인할 review_items
+- 응답 구조·근거 ID 검사, request_id 중복 방지, 대화별 동시 생성 차단, 일일 요청 한도
+- 저장 결과가 불확실할 때 같은 request_id로 복구, 미저장 원고 보호, 저장 중 편집 잠금, 원고 버전 충돌 방지
+- 생성 제공자 선택: OpenAI(Responses API 구조화 출력) 또는 Anthropic 호환(스트리밍 + 강제 도구 호출)
+- 반응형 바닐라 화면, 다크 모드, 그래프, JSON/Markdown 다운로드, 빌드마다 자산 버전 해시
 
 ## 기술 스택
 
@@ -44,6 +56,9 @@ cp .env.example .env
 uvicorn app.main:app --app-dir backend --reload --port 8000
 ```
 
+> Claude Code 터미널처럼 셸에 `ANTHROPIC_BASE_URL`이 이미 설정된 환경에서는 그 값이 `.env`보다 우선합니다(python-dotenv 기본 동작).
+> 게이트웨이를 쓸 때는 `env -u ANTHROPIC_BASE_URL uvicorn app.main:app --app-dir backend --port 8000`처럼 비우고 실행하세요.
+
 다른 터미널에서:
 
 ```bash
@@ -56,7 +71,7 @@ python3 -m http.server 3000 --directory frontend/public
 http://localhost:3000 접속. `file://`로 HTML을 직접 열지 마세요.
 환경 변수 변경 후 백엔드를 재시작하고 프론트를 다시 빌드하세요.
 
-## Firebase / OpenAI 준비
+## Firebase / 생성 모델 준비
 
 1. Firebase 콘솔에서 프로젝트와 웹 앱을 생성합니다.
 2. Authentication → Sign-in method에서 Google을 활성화합니다. Authorized domains에 `localhost`와 실제 Vercel 도메인을 등록합니다.
@@ -107,6 +122,7 @@ PYTHONPATH=backend python -m scripts.import_sources --kind metrics \
 원고 JSON은 `ContentInput` 형태의 배열입니다. `title`, `text`가 필수이며 `source`에 원본 대화/메시지 ID를 기록할 수 있습니다.
 `--kind contents`로 같은 절차를 사용합니다. 안정적인 고유 `source`를 권장합니다.
 검토 전 GPT 원고는 사실 검증 자료가 아니며 게시 상태 `unknown`, 검토 상태 `unverified`로 가져옵니다.
+원고 항목에 `performance`(`views`, `reach`, `likes`, `comments`, `saves`, `shares`, 모두 선택·0 이상 정수)를 넣으면 성과도 함께 가져옵니다. 화면에서는 라이브러리의 "게시물 성과 입력"에서 수정할 수 있습니다.
 
 ## API와 구조
 
@@ -180,8 +196,9 @@ E2E는 임시 브라우저에서 `auth.js`만 대체합니다. 운영 코드에 
 
 ## 화면 예시
 
-아래 이미지는 **합성 데이터·모의 모델을 사용한 로컬 테스트 화면**입니다. 실제 배포 제출용 스크린샷은 운영 연결 확인 후 교체해야 합니다.
+아래 이미지는 **합성 데이터·모의 모델을 사용한 로컬 테스트 화면**입니다. 실제 개인 데이터나 실제 모델 응답이 아닙니다.
 
-![채팅과 데이터 요약](docs/screenshots/chat.png)
-![데이터 CRUD](docs/screenshots/data.png)
-![대화 불러오기](docs/screenshots/history.png)
+![작업실: 성과 상위 콘텐츠와 기획 파트너](docs/screenshots/studio.png)
+![콘텐츠 라이브러리: 붙여넣기와 성과 입력](docs/screenshots/library.png)
+![계정 데이터: 빠른 기간과 기록 추가](docs/screenshots/data.png)
+![제작 선호: 클릭형 구성](docs/screenshots/preferences.png)
