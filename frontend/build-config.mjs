@@ -1,0 +1,61 @@
+import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+const root = new URL("./", import.meta.url);
+const raw = JSON.parse(process.env.FIREBASE_WEB_CONFIG || "{}");
+const allowed = [
+  "apiKey",
+  "authDomain",
+  "projectId",
+  "appId",
+  "messagingSenderId",
+  "storageBucket",
+];
+if (Object.keys(raw).some((k) => !allowed.includes(k)))
+  throw new Error(
+    "FIREBASE_WEB_CONFIG must contain only public Firebase web configuration fields.",
+  );
+const api = new URL(process.env.API_BASE_URL || "http://localhost:8000");
+if (
+  !["http:", "https:"].includes(api.protocol) ||
+  api.username ||
+  api.password ||
+  api.search ||
+  api.hash
+)
+  throw new Error("Invalid API_BASE_URL");
+if (
+  process.env.VERCEL &&
+  (api.protocol !== "https:" ||
+    !raw.apiKey ||
+    !raw.projectId ||
+    !raw.authDomain)
+)
+  throw new Error(
+    "Production requires HTTPS API_BASE_URL and Firebase public configuration.",
+  );
+const config = `window.APP_CONFIG = ${JSON.stringify({ apiBaseUrl: api.href.replace(/\/$/, ""), firebase: raw })};\n`;
+await writeFile(new URL("config.js", root), config);
+await mkdir(new URL("public/", root), { recursive: true });
+for (const file of [
+  "index.html",
+  "styles.css",
+  "app.js",
+  "api.js",
+  "auth.js",
+  "config.js",
+])
+  await copyFile(new URL(file, root), new URL(`public/${file}`, root));
+// Version asset URLs so browsers pick up new CSS/JS after each build.
+const hash = createHash("sha256");
+for (const file of ["styles.css", "app.js", "api.js", "auth.js", "config.js"])
+  hash.update(await readFile(new URL(file, root)));
+const version = hash.digest("hex").slice(0, 10);
+const html = await readFile(new URL("index.html", root), "utf8");
+await writeFile(
+  new URL("public/index.html", root),
+  html.replace(
+    /(href|src)="(styles\.css|app\.js|config\.js)"/g,
+    `$1="$2?v=${version}"`,
+  ),
+);
+console.log("Built static frontend with public configuration only.");

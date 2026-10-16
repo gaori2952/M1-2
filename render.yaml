@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: m1-2-content-assistant
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.lock
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-6.1-sol
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_BASE_URL
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: ALLOWED_USER_UIDS
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: MAX_OUTPUT_TOKENS
+        value: 4000
+      - key: DAILY_REQUEST_LIMIT
+        value: 30
