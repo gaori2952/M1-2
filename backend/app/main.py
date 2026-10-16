@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .anthropic_generation import AnthropicGenerator
 from .config import Settings
 from .generation import OpenAIGenerator
 from .routes.chat import router as chat_router
@@ -18,7 +19,10 @@ def create_app(settings=None, *, store=None, verify_token=None, generator=None):
     app.state.settings = settings
     app.state.store = store if store is not None else FirestoreStore(firebase)
     app.state.verify_token = verify_token or firebase.verify
-    app.state.generator = generator or OpenAIGenerator(settings)
+    default_generator = (
+        AnthropicGenerator if settings.llm_provider == "anthropic" else OpenAIGenerator
+    )
+    app.state.generator = generator or default_generator(settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
@@ -42,7 +46,7 @@ def create_app(settings=None, *, store=None, verify_token=None, generator=None):
             "status": "ok",
             "configured": bool(
                 settings.firebase_service_account_json
-                and settings.openai_api_key
+                and settings.generator_configured
                 and settings.allowed_user_uids
             ),
         }
