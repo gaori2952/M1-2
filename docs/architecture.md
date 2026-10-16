@@ -10,7 +10,7 @@
 | Firebase Authentication | 사용자의 신원을 확인하는 출입증 발급처 | Google 로그인과 ID 토큰 발급 |
 | FastAPI · Render | 요청을 처리하는 서비스 본체 | 토큰 검증, 권한 검사, 검색, 통계, 프롬프트 구성, AI 호출, 저장 |
 | Firestore | 사용자별 자료와 기록을 보관하는 저장소 | 데이터, 콘텐츠, 선호, 대화, 초안, 피드백 저장 |
-| OpenAI API | 제공된 근거를 읽고 초안을 만드는 생성 모델 | 맞춤 답변, 주제와 원고·퀴즈 생성 |
+| OpenAI API 또는 Anthropic 호환 API | 제공된 근거를 읽고 초안을 만드는 생성 모델 (`LLM_PROVIDER`로 선택) | 맞춤 답변, 주제와 원고·퀴즈 생성 |
 
 ```mermaid
 flowchart TD
@@ -22,7 +22,7 @@ flowchart TD
     V --> S[통계 계산 · 관련 콘텐츠 검색 · 선호 선택]
     S <--> F[(Firestore)]
     S --> P[근거와 요청을 모아 프롬프트 구성]
-    P --> G[OpenAI API]
+    P --> G[OpenAI 또는 Anthropic 호환 API]
     G --> C[출력 구조·근거 ID 확인]
     C --> F
     C -->|답변과 초안| W

@@ -27,7 +27,7 @@
 
 ## 기술 스택
 
-Python 3.10+ / FastAPI / Pydantic / firebase-admin / OpenAI Python SDK / python-dotenv.
+Python 3.10+ / FastAPI / Pydantic / firebase-admin / OpenAI Python SDK 또는 Anthropic Python SDK / python-dotenv.
 프론트는 HTML·CSS·JavaScript와 Firebase Auth 웹 SDK이며 UI 프레임워크를 사용하지 않습니다.
 배포 대상은 백엔드 Render, 프론트 Vercel입니다.
 
@@ -64,15 +64,19 @@ http://localhost:3000 접속. `file://`로 HTML을 직접 열지 마세요.
 4. Project settings → Service accounts에서 서비스 계정 JSON을 준비합니다. 파일 내용을 `.env`의 `FIREBASE_SERVICE_ACCOUNT_JSON`에 단일 줄 JSON으로 넣습니다. 예: `FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'`. 키 파일이나 실제 값은 Git·채팅에 올리지 마세요.
 5. 웹 앱의 Firebase configuration을 `frontend/.env.local`의 `FIREBASE_WEB_CONFIG`에 넣습니다. 이것은 공개 클라이언트 설정이며 서비스 계정 JSON과 다릅니다.
 6. 화면에서 Google 로그인 한 번 후 Firebase Authentication 사용자 목록에서 UID를 확인하고 백엔드 `ALLOWED_USER_UIDS`에 입력합니다. 그 전까지 백엔드의 403 응답은 정상적인 접근 제한입니다.
-7. OpenAI API 키를 백엔드 `.env`의 `OPENAI_API_KEY`에 넣습니다. API 사용 권한이 있는 모델을 `OPENAI_MODEL`로 선택하세요. ChatGPT 구독과 API 이용은 별개입니다.
+7. 생성 모델을 고릅니다. 기본 `LLM_PROVIDER=openai`는 `OPENAI_API_KEY`와 API 사용 권한이 있는 `OPENAI_MODEL`이 필요합니다(ChatGPT 구독과 API 이용은 별개). Anthropic 호환 게이트웨이(예: COPA)를 쓰려면 `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`(발급받은 가상 키), `ANTHROPIC_MODEL`을 설정합니다. 이 경로는 강제 도구 호출로 구조화 응답을 받으므로 강제 `tool_choice`를 거부하는 모델(Opus 5.5, Sonnet 5.5, Fable 5.1)은 사용할 수 없습니다.
 8. 서버 재시작 후 CRUD부터 확인하고 모델 호출은 후보/원고 각 1회로 작게 시작하세요.
 
 ## 환경 변수
 
 | 위치 | 변수 | 설명 |
 | --- | --- | --- |
+| 백엔드 | LLM_PROVIDER | `openai`(기본) 또는 `anthropic`. 선택한 제공자의 키만 필요 |
 | 백엔드 | OPENAI_API_KEY | OpenAI API 키 |
 | 백엔드 | OPENAI_MODEL | 기본 `gpt-6.1-sol`; 계정에서 사용할 수 있는 구조화 출력 지원 모델 |
+| 백엔드 | ANTHROPIC_API_KEY | Anthropic 또는 호환 게이트웨이 키 |
+| 백엔드 | ANTHROPIC_BASE_URL | 호환 게이트웨이 주소. 비우면 SDK 기본값 |
+| 백엔드 | ANTHROPIC_MODEL | 기본 `claude-sonnet-4`; 게이트웨이 모델 표의 ID. 한국어 원고가 길어 이 경로에서는 `MAX_OUTPUT_TOKENS=8000` 권장. 셸에 `ANTHROPIC_BASE_URL`이 이미 있으면 `.env`보다 우선하므로 비우고 실행 |
 | 백엔드 | FIREBASE_SERVICE_ACCOUNT_JSON | 서비스 계정 JSON 문자열 |
 | 백엔드 | ALLOWED_USER_UIDS | 쉼표로 구분한 허용 Firebase UID. 비어 있으면 아무도 허용하지 않음 |
 | 백엔드 | ALLOWED_ORIGINS | 쉼표로 구분한 정확한 프론트 origin. 기본 `http://localhost:3000` |
@@ -81,7 +85,7 @@ http://localhost:3000 접속. `file://`로 HTML을 직접 열지 마세요.
 | 프론트 빌드 | API_BASE_URL | 백엔드 주소, 브라우저에 공개됨 |
 | 프론트 빌드 | FIREBASE_WEB_CONFIG | Firebase 웹 설정 JSON, 브라우저에 공개됨 |
 
-프론트 빌드는 허용된 Firebase 공개 필드만 받습니다. OpenAI 키와 서비스 계정은 Render에만 설정합니다.
+프론트 빌드는 허용된 Firebase 공개 필드만 받습니다. 모델 API 키와 서비스 계정은 백엔드(Render)에만 설정합니다.
 `.env*`, `frontend/config.js`, `frontend/public/`, `.private/`는 Git에서 제외됩니다.
 
 ## 개인 자료 가져오기
@@ -116,6 +120,7 @@ backend/app/
   analytics.py         결정적인 통계 계산
   content_search.py    원고 선택·키워드 검색
   generation.py        OpenAI 구조화 응답·근거 검사
+  anthropic_generation.py  Anthropic 호환 API 강제 도구 호출 응답
   chat_service.py      컨텍스트·예약·한도·원자적 저장
   routes/              HTTP 엔드포인트
 frontend/              바닐라 화면과 공개 설정 빌드
