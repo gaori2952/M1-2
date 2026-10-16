@@ -30,3 +30,8 @@ dist/
 .vercel/
 .DS_Store
 *.log
+.superpowers/
+frontend/config.js
+frontend/public/
+test-results/
+playwright-report/

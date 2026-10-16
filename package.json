@@ -1,0 +1,10 @@
+{
+  "name": "m1-2-content-studio",
+  "private": true,
+  "scripts": {
+    "build": "node frontend/build-config.mjs",
+    "test:e2e": "node tests/e2e/flow.mjs",
+    "format:check": "prettier --check frontend/*.js frontend/*.mjs frontend/*.html frontend/*.css tests/e2e/*.mjs"
+  },
+  "devDependencies": {"playwright": "^1.56.0", "prettier": "^3.6.0"}
+}

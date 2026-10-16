@@ -1,0 +1,13 @@
+import {mkdir,writeFile,copyFile} from 'node:fs/promises';
+const root=new URL('./',import.meta.url);
+const raw=JSON.parse(process.env.FIREBASE_WEB_CONFIG||'{}');
+const allowed=['apiKey','authDomain','projectId','appId','messagingSenderId','storageBucket'];
+if(Object.keys(raw).some(k=>!allowed.includes(k))) throw new Error('FIREBASE_WEB_CONFIG must contain only public Firebase web configuration fields.');
+const api=new URL(process.env.API_BASE_URL||'http://localhost:8000');
+if(!['http:','https:'].includes(api.protocol)||api.username||api.password||api.search||api.hash) throw new Error('Invalid API_BASE_URL');
+if(process.env.VERCEL && (api.protocol!=='https:' || !raw.apiKey || !raw.projectId || !raw.authDomain)) throw new Error('Production requires HTTPS API_BASE_URL and Firebase public configuration.');
+const config=`window.APP_CONFIG = ${JSON.stringify({apiBaseUrl:api.href.replace(/\/$/,''),firebase:raw})};\n`;
+await writeFile(new URL('config.js',root),config);
+await mkdir(new URL('public/',root),{recursive:true});
+for(const file of ['index.html','styles.css','app.js','api.js','auth.js','config.js']) await copyFile(new URL(file,root),new URL(`public/${file}`,root));
+console.log('Built static frontend with public configuration only.');
