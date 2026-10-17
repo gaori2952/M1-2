@@ -5,11 +5,15 @@
 
 ## 현재 상태
 
-로컬에서 **실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)에 연결해 검증**했습니다. Render·Vercel 배포는 아직 하지 않았습니다.
+**Render(백엔드)·Vercel(프론트)에 배포**했고, 실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)로 동작을 확인했습니다.
 
-- 프론트 URL: (로컬: http://localhost:3000)
-- 백엔드 API URL: (로컬: http://localhost:8000)
-- Swagger URL:  (로컬: http://localhost:8000/docs)
+
+- 프론트 URL: https://m1-2-frontend-theta.vercel.app
+- 백엔드 API URL: https://m1-2-6ae7.onrender.com
+- Swagger URL: https://m1-2-6ae7.onrender.com/docs
+
+> 백엔드는 Render 무료 플랜이라 15분간 요청이 없으면 잠듭니다. 첫 요청은 50초 이상 걸릴 수 있으며, 화면은 8초 이상 대기 시 안내 문구를 표시합니다.
+> 접근은 `ALLOWED_USER_UIDS`에 등록한 Google 계정만 가능합니다.
 
 [아키텍처](docs/architecture.md) · [구현 계획](docs/implementation-plan.md) · [검증 결과와 제한](docs/verification.md)
 
@@ -211,6 +215,16 @@ E2E는 임시 브라우저에서 `auth.js`만 대체합니다. 운영 코드에 
 **Vercel**: Root Directory `frontend`, Framework `Other`, Build Command `node build-config.mjs`, Output Directory `public`. `API_BASE_URL`과 `FIREBASE_WEB_CONFIG`를 설정합니다. 배포 시 HTTPS API 주소와 Firebase 공개 설정이 없으면 빌드가 실패합니다.
 
 배포 후 Render의 `ALLOWED_ORIGINS`에 정확한 Vercel origin을, Firebase Authorized domains에 Vercel 호스트를 추가하세요.
+
+현재 배포 설정(비밀값 제외):
+
+| 위치 | 설정 |
+| --- | --- |
+| Render | Root `backend`, Python 3.12.14, `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://copa.codyssey.kr`, `ANTHROPIC_MODEL=claude-sonnet-4`, `MAX_OUTPUT_TOKENS=8000`, `DAILY_REQUEST_LIMIT=30`, `ALLOWED_ORIGINS=https://m1-2-frontend-theta.vercel.app,http://localhost:3000` |
+| Vercel | Root `frontend`, Framework Other, Build `node build-config.mjs`, Output `public`, `API_BASE_URL=https://m1-2-6ae7.onrender.com`, `FIREBASE_WEB_CONFIG`(공개 웹 설정) |
+| Firebase | Authorized domains에 `m1-2-frontend-theta.vercel.app` 추가 |
+
+`FIREBASE_SERVICE_ACCOUNT_JSON`은 따옴표 없이 `{`부터 `}`까지 한 줄 JSON으로 넣어야 합니다. 값이 깨지면 모든 보호 API가 401(로그인 만료/유효하지 않음)로 응답합니다.
 프리뷰 도메인은 필요한 주소만 개별 허용합니다. 화면은 8초 이상 대기 시 콜드스타트 안내를 표시합니다.
 `/health`의 configured는 환경 변수 존재 여부이며 실제 서비스 연결 성공을 보증하지 않습니다.
 

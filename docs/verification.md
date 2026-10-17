@@ -30,6 +30,15 @@ Firebase 프로젝트 `m1-2-1c289` + COPA 게이트웨이(Anthropic 호환, `cla
 
 - 2026-10-17 컨텍스트 주입 변경: `/api/data/summary`와 같은 요약을 시스템 프롬프트 `[사용자 데이터 요약]`에 넣고, 원고·대화 기록은 사용자 메시지로 분리. 로컬 실제 연결 확인에서 COPA 응답의 요약 수치가 `/api/data/summary` 값과 일치함을 확인했습니다.
 
+## 배포 검증 (2026-10-17)
+
+- Render `https://m1-2-6ae7.onrender.com`: `/health` 200(configured=true), `/docs`·`/openapi.json` 200, 토큰 없는 요청 401.
+- 허용 UID의 실제 Firebase ID 토큰으로 Render API 호출: 데이터 요약, 콘텐츠 라이브러리, 대화·초안 조회가 정상 응답함.
+- Render에서 COPA 채팅이 성공했고, 응답의 요약 수치가 API 요약과 일치함을 확인. 확인용 대화는 즉시 삭제.
+- Vercel `https://m1-2-frontend-theta.vercel.app`: 빌드된 config의 API 주소·Firebase 프로젝트 확인, Render CORS 프리플라이트 200(`access-control-allow-origin` 일치).
+- 배포 프론트에서 Render까지 요약 카드, 데이터 목록, 라이브러리, 대화 기록의 화면 흐름과 페이지 오류 없음을 확인. (Google 로그인 팝업 자체는 사용자 브라우저에서 확인)
+- 발견·수정: Render의 서비스 계정 JSON 값이 깨져 모든 보호 API가 401 → 한 줄 JSON으로 재입력 후 해결. `ALLOWED_ORIGINS` 미반영 시 CORS 400 → 재배포로 해결.
+
 ## 테스트 환경과 실제 서비스의 구분
 
 자동 테스트는 **테스트 파일에서만** 인증 검증·저장소·모델 경계를 대체합니다. 통계·API·권한 검사·개인화 컨텍스트·출력 검증·대화 저장 로직은 실제 애플리케이션 코드를 실행합니다.
@@ -41,7 +50,7 @@ Firebase 프로젝트 `m1-2-1c289` + COPA 게이트웨이(Anthropic 호환, `cla
 
 - Firebase ID 토큰 철회와 Firestore 트랜잭션 경계 (로컬에서 실제 로그인 및 CRUD는 확인했으나 별도로 시험하지 않음)
 - 실제 OpenAI 호출 및 COPA의 반복 호출 품질, 수식·정답 정확성, 실제 사용 비용
-- Render / Vercel 배포 URL, 운영 CORS, 콜드스타트, 실제 모바일 로그인
+- 실제 모바일 기기의 Google 로그인
 - GPT 프로젝트 원문 전체 회수와 이미지 시각 검증
 
 이번 로컬 연결 검증은 Firebase와 COPA를 사용했습니다. OpenAI 경로는 사용하지 않았으며, Firebase 토큰 철회와 Firestore 트랜잭션 경계는 별도 검증이 필요합니다.
