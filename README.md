@@ -214,10 +214,28 @@ E2E는 임시 브라우저에서 `auth.js`만 대체합니다. 운영 코드에 
 프리뷰 도메인은 필요한 주소만 개별 허용합니다. 화면은 8초 이상 대기 시 콜드스타트 안내를 표시합니다.
 `/health`의 configured는 환경 변수 존재 여부이며 실제 서비스 연결 성공을 보증하지 않습니다.
 
-## 화면 예시 (합성 테스트 데이터)
+## 제출 스크린샷 (합성 테스트 데이터)
 
-아래 이미지는 합성 데이터·모의 모델을 사용한 로컬 테스트 화면이며 실제 개인 데이터나 실제 모델 응답은 포함하지 않습니다.
+아래 이미지는 새로 시작한 로컬 preview 서버의 메모리 저장소와 모의 모델로 촬영했습니다. 실제 Firestore 자료, 계정 지표, 실제 모델 응답은 포함하지 않으며 제품 동작 예시입니다.
 
-![작업실: 성과 상위 콘텐츠](docs/screenshots/studio.png)
+**1. 합성 계정 데이터 기반 채팅**
+
+![합성 데이터 요약을 반영한 채팅](docs/screenshots/chat.png)
+
+**2. 계정 데이터 기록 추가**
+
+![합성 테스트 기록 추가 후 목록](docs/screenshots/data.png)
+
+**3. 대화 기록 목록**
+
+![합성 테스트 대화 기록](docs/screenshots/history.png)
+
+**4. 대화 불러오기**
+
+![합성 테스트 대화 불러오기 결과](docs/screenshots/history-loaded.png)
+
+### 기타 화면 예시
+
 ![콘텐츠 라이브러리: 붙여넣기와 성과 입력](docs/screenshots/library.png)
+![작업실: 성과 상위 콘텐츠](docs/screenshots/studio.png)
 ![제작 선호: 클릭형 구성](docs/screenshots/preferences.png)
