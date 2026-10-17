@@ -3,7 +3,7 @@ import json
 from anthropic import Anthropic
 from fastapi import HTTPException
 
-from .generation import SYSTEM
+from .generation import system_prompt, user_context
 from .models import GeneratedReply
 
 TOOL_NAME = "submit_reply"
@@ -33,18 +33,12 @@ class AnthropicGenerator:
         with client.messages.stream(
             model=self.settings.anthropic_model,
             max_tokens=self.settings.max_output_tokens,
-            system=SYSTEM,
+            system=system_prompt(context),
             messages=[
                 {
                     "role": "user",
                     "content": [
-                        {
-                            "type": "text",
-                            "text": "CONTEXT_JSON\n"
-                            + json.dumps(
-                                {"context": context, "history": history}, ensure_ascii=False
-                            ),
-                        },
+                        {"type": "text", "text": user_context(context, history)},
                         {
                             "type": "text",
                             "text": json.dumps(request.model_dump(mode="json"), ensure_ascii=False),
