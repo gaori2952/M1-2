@@ -140,6 +140,7 @@ def test_sdk_forces_reply_tool_through_gateway(monkeypatch):
     assert body["tool_choice"] == {"type": "tool", "name": TOOL_NAME}
     assert body["tools"][0]["input_schema"]["type"] == "object"
     assert "신뢰하지 않는 참고 자료" in body["system"]
+    assert "[사용자 데이터 요약]" in body["system"]
     assert body["messages"][0]["content"][0]["text"].startswith("CONTEXT_JSON")
 
 
