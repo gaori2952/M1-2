@@ -7,6 +7,7 @@
 
 **Render(백엔드)·Vercel(프론트)에 배포**했고, 실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)로 동작을 확인했습니다.
 
+
 - 프론트 URL: https://m1-2-frontend-theta.vercel.app
 - 백엔드 API URL: https://m1-2-6ae7.onrender.com
 - Swagger URL: https://m1-2-6ae7.onrender.com/docs
