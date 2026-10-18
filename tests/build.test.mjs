@@ -23,6 +23,9 @@ async function fixture(fn) {
       "auth.js",
       "card-editor.js",
       "card-renderer.js",
+      "image-review.js",
+      "review-images.js",
+      "image-review.css",
     ])
       await writeFile(join(dir, f), "test asset");
     await cp("frontend/vendor", join(dir, "vendor"), { recursive: true });
@@ -58,6 +61,15 @@ test("build exports public config and excludes backend secrets", () =>
     assert.match(output, /https:\/\/api.example.com/);
     assert.ok(!output.includes("must-not-be-exported"));
     assert.ok(!output.includes("private-server-only"));
+    for (const name of [
+      "image-review.js",
+      "review-images.js",
+      "image-review.css",
+    ])
+      assert.equal(
+        await readFile(join(dir, "public", name), "utf8"),
+        "test asset",
+      );
   }));
 test("production rejects missing config and private fields", () =>
   fixture(async (dir) => {

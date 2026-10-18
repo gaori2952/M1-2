@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#ffffff" />
     <title>Contents</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="image-review.css" />
     <script src="config.js"></script>
     <script type="module" src="app.js"></script>
   </head>
@@ -13,8 +14,12 @@
     <aside class="sidebar">
       <a class="brand" href="#">Contents</a>
       <nav aria-label="주요 메뉴">
-        <span class="nav-group">만들기</span
-        ><button data-view="studio" class="active">
+        <span class="nav-group">검토</span
+        ><button data-view="review" class="active">
+          <span aria-hidden="true">▧</span>이미지 검토
+        </button>
+        <span class="nav-group">제작 도구</span
+        ><button data-view="studio">
           <span aria-hidden="true">✦</span>작업실</button
         ><button data-view="drafts">
           <span aria-hidden="true">▣</span>원고함</button
@@ -40,9 +45,12 @@
     <main>
       <div id="notice" role="status" aria-live="polite" hidden></div>
       <div id="setup" class="setup" hidden>
-        Google 로그인 후 저장한 카드와 개인 자료를 불러올 수 있어요.
+        Google 로그인 후 이미지 검토와 저장한 작업을 시작할 수 있어요.
       </div>
-      <section id="view-studio" class="view">
+      <section id="view-review" class="view">
+        <div id="image-review-root"></div>
+      </section>
+      <section id="view-studio" class="view" hidden>
         <div class="page-heading">
           <div>
             <span class="eyebrow">YOUR CARDS, YOUR CONTROL</span>
