@@ -15,7 +15,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 page.setDefaultTimeout(8000);
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-await page.route("**/auth.js", (route) =>
+await page.route("**/auth.js*", (route) =>
   route.fulfill({
     contentType: "text/javascript",
     body: `export async function connectAuth(callback){callback({displayName:'테스트 사용자',getIdToken:async()=> 'alice'});return {login:async()=>{},logout:async()=>callback(null)};}`,
@@ -35,6 +35,7 @@ try {
   await mkdir("test-results", { recursive: true });
   await page.screenshot({ path: "test-results/data.png", fullPage: true });
   await page.getByRole("button", { name: "작업실", exact: true }).click();
+  await page.locator(".planning-tools > summary").click();
   await page.locator("#message").fill("이번 기간은 어때?");
   await page.getByRole("button", { name: "보내기", exact: true }).click();
   await page.getByText(/선택 기간 조회수의 유효 관측/).waitFor();

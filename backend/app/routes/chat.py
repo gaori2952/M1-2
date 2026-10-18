@@ -1,8 +1,6 @@
-import json
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from .. import editor_service as editor
 from .. import repository as repo
 from ..auth import require_owner
 from ..chat_service import run_chat
@@ -29,39 +27,17 @@ def draft(key: str, uid=Depends(require_owner), db=Depends(store)):
 
 @router.put("/drafts/{key}")
 def edit_draft(key: str, body: DraftUpdate, uid=Depends(require_owner), db=Depends(store)):
-    payload = body.draft.model_dump(mode="json")
-    if len(json.dumps(payload, ensure_ascii=False).encode()) > 150000:
-        raise HTTPException(422, "원고가 너무 큽니다.")
+    payload = body.draft.model_dump(mode="json", exclude_unset=True)
+    editor.check_size(payload)
 
     def run(tx):
         old = repo.owned(tx, "drafts", key, uid)
-        if old["version"] != body.version:
-            raise HTTPException(409, "다른 곳에서 수정되었습니다. 다시 불러온 뒤 수정하세요.")
+        editor.check_version(old, body.version)
         if not set(payload["source_ids"]).issubset(set(old["source_ids"])):
             raise HTTPException(422, "새 근거 ID를 임의로 추가할 수 없습니다.")
-        result = old | {
-            "draft": payload,
-            "version": old["version"] + 1,
-            "status": "draft",
-            "updated_at": repo.now(),
-        }
-        tx.set("drafts", key, result)
-        fid = uuid4().hex
-        tx.set(
-            "feedback",
-            fid,
-            {
-                "id": fid,
-                "owner_uid": uid,
-                "draft_id": key,
-                "before": old["draft"],
-                "after": payload,
-                "note": body.feedback,
-                "preference_applied": False,
-                "created_at": repo.now(),
-            },
+        return editor.save_revision(
+            tx, old, payload, body.feedback, body.style.model_dump() if body.style else None
         )
-        return result
 
     return db.atomic(run)
 

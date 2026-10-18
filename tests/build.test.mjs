@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, copyFile, writeFile, readFile, rm } from "node:fs/promises";
+import {
+  mkdtemp,
+  copyFile,
+  writeFile,
+  readFile,
+  rm,
+  cp,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -8,8 +15,17 @@ async function fixture(fn) {
   const dir = await mkdtemp(join(tmpdir(), "m1-build-"));
   try {
     await copyFile("frontend/build-config.mjs", join(dir, "build-config.mjs"));
-    for (const f of ["index.html", "styles.css", "app.js", "api.js", "auth.js"])
+    for (const f of [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "api.js",
+      "auth.js",
+      "card-editor.js",
+      "card-renderer.js",
+    ])
       await writeFile(join(dir, f), "test asset");
+    await cp("frontend/vendor", join(dir, "vendor"), { recursive: true });
     await fn(dir);
   } finally {
     await rm(dir, { recursive: true, force: true });

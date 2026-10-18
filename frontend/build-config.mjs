@@ -1,4 +1,4 @@
-import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, readFile, cp } from "node:fs/promises";
 import { createHash } from "node:crypto";
 const root = new URL("./", import.meta.url);
 const raw = JSON.parse(process.env.FIREBASE_WEB_CONFIG || "{}");
@@ -44,14 +44,27 @@ for (const file of [
   "index.html",
   "styles.css",
   "app.js",
+  "card-editor.js",
+  "card-renderer.js",
   "api.js",
   "auth.js",
   "config.js",
 ])
   await copyFile(new URL(file, root), new URL(`public/${file}`, root));
+await cp(new URL("vendor/", root), new URL("public/vendor/", root), {
+  recursive: true,
+});
 // Version asset URLs so browsers pick up new CSS/JS after each build.
 const hash = createHash("sha256");
-for (const file of ["styles.css", "app.js", "api.js", "auth.js", "config.js"])
+for (const file of [
+  "styles.css",
+  "app.js",
+  "card-editor.js",
+  "card-renderer.js",
+  "api.js",
+  "auth.js",
+  "config.js",
+])
   hash.update(await readFile(new URL(file, root)));
 const version = hash.digest("hex").slice(0, 10);
 const html = await readFile(new URL("index.html", root), "utf8");
@@ -63,3 +76,14 @@ await writeFile(
   ),
 );
 console.log("Built static frontend with public configuration only.");
+
+for (const file of ["app.js", "card-editor.js", "card-renderer.js"]) {
+  const js = await readFile(new URL(file, root), "utf8");
+  await writeFile(
+    new URL(`public/${file}`, root),
+    js.replace(
+      /from (["'])\.\/(api|auth|card-editor|card-renderer)\.js\1/g,
+      `from "./$2.js?v=${version}"`,
+    ),
+  );
+}

@@ -10,14 +10,17 @@ const failures = [];
 async function pageForTest() {
   const page = await browser.newPage();
   page.setDefaultTimeout(6000);
-  await page.route("**/auth.js", (r) =>
+  await page.route("**/auth.js*", (r) =>
     r.fulfill({
       contentType: "text/javascript",
       body: `export async function connectAuth(cb){cb({uid:'alice',displayName:'테스트 사용자',getIdToken:async()=> 'alice'});return {login:async()=>{},logout:async()=>cb(null)};}`,
     }),
   );
   await page.goto("http://127.0.0.1:18101");
-  await page.locator("#source-picker input").first().waitFor();
+  await page
+    .locator("#source-picker input")
+    .first()
+    .waitFor({ state: "attached" });
   return page;
 }
 async function check(name, fn) {
@@ -122,6 +125,7 @@ try {
           });
         else await route.continue();
       });
+      await page.locator(".planning-tools > summary").click();
       await page.locator("#message").fill("재시도 검증");
       await page.getByRole("button", { name: "보내기", exact: true }).click();
       await page.getByText("저장 결과 확인 불가", { exact: true }).waitFor();

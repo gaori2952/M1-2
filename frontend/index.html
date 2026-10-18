@@ -40,169 +40,239 @@
     <main>
       <div id="notice" role="status" aria-live="polite" hidden></div>
       <div id="setup" class="setup" hidden>
-        연결 준비 중이에요. Firebase 로그인 설정 후 개인 자료를 불러올 수
-        있어요. 실행 방법은 README를 참고하세요.
+        Google 로그인 후 저장한 카드와 개인 자료를 불러올 수 있어요.
       </div>
       <section id="view-studio" class="view">
         <div class="page-heading">
           <div>
-            <span class="eyebrow">WHAT WORKED, WHAT'S NEXT</span>
+            <span class="eyebrow">YOUR CARDS, YOUR CONTROL</span>
             <h1>콘텐츠 작업실</h1>
+            <p>내 카드뉴스를 한눈에 보고, 선택한 부분만 고쳐 완성하세요.</p>
+          </div>
+          <button id="new-card-work" class="primary">새 카드 작업</button>
+        </div>
+        <section class="studio-start card">
+          <div>
+            <span class="eyebrow">01 SELECT · 02 REFINE · 03 EXPORT</span>
+            <h2>고칠 카드만 선택하세요.</h2>
             <p>
-              반응이 좋았던 게시물을 근거로, 업데이트하거나 이어갈 주제를
-              찾아요.
+              본문·수식·도식을 따로 수정하고, 전후 비교 후 반영해요.<br />완성한
+              카드는 한 장씩 PNG로, 전체는 ZIP으로 내려받으세요.
             </p>
           </div>
-          <button id="new-chat" class="secondary">＋ 새 대화</button>
-        </div>
-        <section class="performance-board">
+          <div class="start-example" aria-hidden="true">
+            <span>01</span><span>02<br />수정 중</span><span>03</span>
+          </div>
+        </section>
+        <form id="card-import" class="card" hidden>
           <div class="section-top">
-            <div>
-              <h2>성과 상위 콘텐츠</h2>
-              <p class="muted">
-                라이브러리에 입력한 게시물별 성과로 정렬했어요. 조회 대비
-                반응(저장·공유 가중) 기준입니다.
-              </p>
-            </div>
-            <button id="recommend-top" class="primary" type="button">
-              상위 콘텐츠로 주제 추천
+            <h2>원고를 카드로 가져오기</h2>
+            <button id="close-import" type="button" class="text-button">
+              닫기
             </button>
           </div>
-          <div id="top-list" class="top-list"></div>
-        </section>
-        <div class="studio-grid">
-          <div class="conversation-panel">
-            <div class="panel-title">
-              <span>✦ 기획 파트너</span
-              ><span id="save-state" class="muted"
-                >답변은 대화에 자동 저장됩니다</span
-              >
-            </div>
-            <div id="messages" class="messages" aria-live="polite">
-              <div class="welcome">
-                <span class="welcome-icon">✦</span>
-                <h2>어떤 콘텐츠를 업데이트할까요?</h2>
-                <p>
-                  위의 성과 상위 콘텐츠에서 '이 콘텐츠로 추천'을 누르거나,<br />직접
-                  질문해 보세요. 추천받은 주제는 바로 카드뉴스 원고로 만들 수
-                  있어요.
+          <label
+            >작업 제목<input
+              id="import-title"
+              maxlength="200"
+              placeholder="예: 전자기학 3편"
+          /></label>
+          <label
+            >원고 또는 내보낸 JSON<textarea
+              id="import-text"
+              rows="8"
+              maxlength="300000"
+              placeholder="첫 카드 제목&#10;첫 카드 본문&#10;---&#10;두 번째 카드 제목&#10;두 번째 카드 본문"
+            ></textarea>
+          </label>
+          <p class="muted">
+            카드마다 첫 줄은 제목, 나머지는 본문이에요. --- 한 줄로 4~10장을
+            구분하세요. 비워 두면 빈 카드로 시작합니다. 완성 PNG의 요소 자동
+            분리는 지원하지 않아요.
+          </p>
+          <div class="import-options">
+            <label
+              >빈 카드 수<select id="import-count">
+                <option>4</option>
+                <option>6</option>
+                <option>8</option>
+                <option selected>10</option>
+              </select></label
+            ><label
+              >JSON 파일 선택<input
+                id="import-json"
+                type="file"
+                accept=".json,application/json"
+            /></label>
+          </div>
+          <button class="primary">카드로 가져오기</button>
+        </form>
+        <div class="section-top">
+          <h2>이어서 작업하기</h2>
+          <button class="text-button" data-view="drafts">
+            원고함 전체 보기 →
+          </button>
+        </div>
+        <div id="recent-drafts" class="card-grid">
+          <p class="muted">로그인하면 저장한 작업을 이어서 열 수 있어요.</p>
+        </div>
+        <details class="planning-tools">
+          <summary>기획·데이터 상담</summary>
+          <button id="new-chat" class="secondary">＋ 새 대화</button>
+          <section class="performance-board">
+            <div class="section-top">
+              <div>
+                <h2>성과 상위 콘텐츠</h2>
+                <p class="muted">
+                  라이브러리에 입력한 게시물별 성과로 정렬했어요. 조회 대비
+                  반응(저장·공유 가중) 기준입니다.
                 </p>
-                <div class="suggestions">
-                  <button
-                    data-prompt="기존 전자기학 콘텐츠 다음에 만들 주제 3개 추천해줘"
-                    data-mode="ideas"
-                  >
-                    후속 주제 3개 찾기 ↗</button
-                  ><button
-                    data-prompt="현재 데이터의 추세와 해석할 때 주의할 점을 알려줘"
-                    data-mode="chat"
-                  >
-                    내 데이터 살펴보기 ↗
-                  </button>
-                </div>
               </div>
+              <button id="recommend-top" class="primary" type="button">
+                상위 콘텐츠로 주제 추천
+              </button>
             </div>
-            <div id="ideas" class="ideas"></div>
-            <div id="loading" class="loading" hidden>
-              <span class="spinner"></span>원고와 데이터를 읽고 있어요…
-            </div>
-            <form id="chat-form" class="composer">
-              <div class="composer-options">
-                <label
-                  >무엇을 할까요<select id="mode">
-                    <option value="chat">자유 질문·데이터 상담</option>
-                    <option value="ideas">후속 주제 3개 추천받기</option>
-                  </select></label
-                ><label
-                  >원고 카드 수<select id="card-count">
-                    <option>4</option>
-                    <option>5</option>
-                    <option selected>6</option>
-                    <option>7</option>
-                    <option>8</option>
-                    <option>9</option>
-                    <option>10</option>
-                  </select></label
-                ><label
-                  >시리즈<select id="series-select">
-                    <option value="">일반 제작</option>
-                  </select></label
+            <div id="top-list" class="top-list"></div>
+          </section>
+          <div class="studio-grid">
+            <div class="conversation-panel">
+              <div class="panel-title">
+                <span>✦ 기획 파트너</span
+                ><span id="save-state" class="muted"
+                  >답변은 대화에 자동 저장됩니다</span
                 >
               </div>
-              <label class="sr-only" for="message">메시지</label
-              ><textarea
-                id="message"
-                maxlength="4000"
-                rows="3"
-                placeholder="예: 전기장 원고를 참고해서, 전위를 쉽게 설명할 후속 주제를 추천해줘."
-                required
-              ></textarea>
-              <div class="composer-bottom">
-                <small
-                  >① 주제 추천 → ② 마음에 드는 주제로 원고 만들기 → ③ 원고함에서
-                  다듬기</small
-                ><button id="send" type="submit" class="primary">
-                  보내기 <span aria-hidden="true">↑</span>
+              <div id="messages" class="messages" aria-live="polite">
+                <div class="welcome">
+                  <span class="welcome-icon">✦</span>
+                  <h2>어떤 콘텐츠를 업데이트할까요?</h2>
+                  <p>
+                    위의 성과 상위 콘텐츠에서 '이 콘텐츠로 추천'을 누르거나,<br />직접
+                    질문해 보세요. 추천받은 주제는 바로 카드뉴스 원고로 만들 수
+                    있어요.
+                  </p>
+                  <div class="suggestions">
+                    <button
+                      data-prompt="기존 전자기학 콘텐츠 다음에 만들 주제 3개 추천해줘"
+                      data-mode="ideas"
+                    >
+                      후속 주제 3개 찾기 ↗</button
+                    ><button
+                      data-prompt="현재 데이터의 추세와 해석할 때 주의할 점을 알려줘"
+                      data-mode="chat"
+                    >
+                      내 데이터 살펴보기 ↗
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="ideas" class="ideas"></div>
+              <div id="loading" class="loading" hidden>
+                <span class="spinner"></span>원고와 데이터를 읽고 있어요…
+              </div>
+              <form id="chat-form" class="composer">
+                <div class="composer-options">
+                  <label
+                    >무엇을 할까요<select id="mode">
+                      <option value="chat">자유 질문·데이터 상담</option>
+                      <option value="ideas">후속 주제 3개 추천받기</option>
+                    </select></label
+                  ><label
+                    >원고 카드 수<select id="card-count">
+                      <option>4</option>
+                      <option>5</option>
+                      <option selected>6</option>
+                      <option>7</option>
+                      <option>8</option>
+                      <option>9</option>
+                      <option>10</option>
+                    </select></label
+                  ><label
+                    >시리즈<select id="series-select">
+                      <option value="">일반 제작</option>
+                    </select></label
+                  >
+                </div>
+                <label class="sr-only" for="message">메시지</label
+                ><textarea
+                  id="message"
+                  maxlength="4000"
+                  rows="3"
+                  placeholder="예: 전기장 원고를 참고해서, 전위를 쉽게 설명할 후속 주제를 추천해줘."
+                  required
+                ></textarea>
+                <div class="composer-bottom">
+                  <small
+                    >① 주제 추천 → ② 마음에 드는 주제로 원고 만들기 → ③
+                    원고함에서 다듬기</small
+                  ><button id="send" type="submit" class="primary">
+                    보내기 <span aria-hidden="true">↑</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+            <aside class="context-panel">
+              <section class="context-card">
+                <div class="section-top">
+                  <h2>이번 작업의 근거</h2>
+                  <span class="dot"></span>
+                </div>
+                <p class="muted">
+                  직접 선택하거나, 질문과 관련된 원고를 찾아요.
+                </p>
+                <div id="source-picker" class="source-picker">
+                  <p class="empty-small">로그인 후 원고를 추가해 주세요.</p>
+                </div>
+                <button class="text-button" data-view="library">
+                  라이브러리 관리 →
                 </button>
-              </div>
-            </form>
+              </section>
+              <section class="context-card">
+                <div class="section-top">
+                  <h2>계정 스냅샷</h2>
+                  <span class="tag">최근 7일</span>
+                </div>
+                <p id="summary-period" class="muted">
+                  아직 연결된 데이터가 없어요.
+                </p>
+                <div class="metric-main">
+                  <span id="summary-average">—</span
+                  ><small>일평균 조회수</small>
+                </div>
+                <div class="mini-stats">
+                  <div>
+                    <small>유효 관측</small
+                    ><strong id="summary-count">—</strong>
+                  </div>
+                  <div>
+                    <small>최근 추세</small
+                    ><strong id="summary-trend">—</strong>
+                  </div>
+                </div>
+                <svg
+                  id="trend-chart"
+                  viewBox="0 0 300 90"
+                  role="img"
+                  aria-label="선택 기간 조회수 변화"
+                ></svg>
+                <p class="footnote">
+                  계정 단위 통계예요. 개별 게시물의 성과나 인과관계를 뜻하지
+                  않아요.
+                </p>
+              </section>
+              <section class="context-card compact">
+                <span class="tiny-label">MY STYLE</span>
+                <p id="style-preview">확인한 제작 선호가 아직 없어요.</p>
+                <button class="text-button" data-view="preferences">
+                  나의 제작 선호 설정 →
+                </button>
+              </section>
+              <button id="open-draft" class="secondary" hidden>
+                이 대화의 원고 열기
+              </button>
+            </aside>
           </div>
-          <aside class="context-panel">
-            <section class="context-card">
-              <div class="section-top">
-                <h2>이번 작업의 근거</h2>
-                <span class="dot"></span>
-              </div>
-              <p class="muted">직접 선택하거나, 질문과 관련된 원고를 찾아요.</p>
-              <div id="source-picker" class="source-picker">
-                <p class="empty-small">로그인 후 원고를 추가해 주세요.</p>
-              </div>
-              <button class="text-button" data-view="library">
-                라이브러리 관리 →
-              </button>
-            </section>
-            <section class="context-card">
-              <div class="section-top">
-                <h2>계정 스냅샷</h2>
-                <span class="tag">최근 7일</span>
-              </div>
-              <p id="summary-period" class="muted">
-                아직 연결된 데이터가 없어요.
-              </p>
-              <div class="metric-main">
-                <span id="summary-average">—</span><small>일평균 조회수</small>
-              </div>
-              <div class="mini-stats">
-                <div>
-                  <small>유효 관측</small><strong id="summary-count">—</strong>
-                </div>
-                <div>
-                  <small>최근 추세</small><strong id="summary-trend">—</strong>
-                </div>
-              </div>
-              <svg
-                id="trend-chart"
-                viewBox="0 0 300 90"
-                role="img"
-                aria-label="선택 기간 조회수 변화"
-              ></svg>
-              <p class="footnote">
-                계정 단위 통계예요. 개별 게시물의 성과나 인과관계를 뜻하지
-                않아요.
-              </p>
-            </section>
-            <section class="context-card compact">
-              <span class="tiny-label">MY STYLE</span>
-              <p id="style-preview">확인한 제작 선호가 아직 없어요.</p>
-              <button class="text-button" data-view="preferences">
-                나의 제작 선호 설정 →
-              </button>
-            </section>
-            <button id="open-draft" class="secondary" hidden>
-              이 대화의 원고 열기
-            </button>
-          </aside>
-        </div>
+        </details>
       </section>
       <section id="view-library" class="view" hidden>
         <div class="page-heading">
@@ -468,9 +538,9 @@
       <section id="draft-editor" class="view" hidden>
         <div class="page-heading">
           <div>
-            <span class="eyebrow">SHAPE YOUR IDEA</span>
-            <h1>카드뉴스 원고 편집</h1>
-            <p>AI 초안이에요. 수식·그림 방향·정답을 확인한 뒤 사용하세요.</p>
+            <span class="eyebrow">EDIT ONLY WHAT YOU CHOOSE</span>
+            <h1>카드뉴스 편집실</h1>
+            <p>카드를 고르고, 수정 범위를 지정하고, 비교한 뒤 반영하세요.</p>
           </div>
           <div class="heading-actions">
             <span id="draft-state" class="pill"></span
