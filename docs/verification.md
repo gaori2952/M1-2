@@ -83,3 +83,12 @@ Firestore 어댑터는 공식 SDK 트랜잭션을 사용하지만 메모리 저�
 
 - [Render FastAPI 배포](https://render.com/docs/deploy-fastapi)
 - [Vercel 빌드 설정](https://vercel.com/docs/builds/configure-a-build)
+
+## Google 로그인 장애 수정 (2026-10-18)
+
+- Chrome과 앱 내 브라우저에서 `auth/api-key-not-valid`를 재현했다.
+- Render `/health` 200, 프론트 origin의 CORS preflight 200을 확인했다. 장애 지점은 Google 로그인용 Firebase 웹 설정이었다.
+- 배포된 Firebase 웹 API 키에 마스킹 문자 `•`가 포함되어 있었다. 로컬 원래 웹 설정은 Firebase 프로젝트 설정 API에서 200이며 Vercel 도메인도 허용돼 있음을 확인했다. 키 값은 기록하지 않았다.
+- Vercel의 `FIREBASE_WEB_CONFIG`(Production·Preview)를 검증된 기존 공개 웹 설정으로 교정하고 Production을 재배포했다. 새 배포 `4LCgH5HTfhMEDKtQn6jeh1n77J7Y`는 Ready, 실제 Production config는 검증한 키와 일치한다.
+- 재발 방지: Production 빌드에서 마스킹/형식 오류 키를 거부한다. 회귀 테스트는 수정 전 실패·수정 후 통과. 빌드 테스트 3개와 백엔드 테스트 43개 통과.
+- 개별 Google 계정 선택 후 최종 로그인은 사용자 브라우저에서 확인할 단계다. 이 기록을 최종 계정 로그인 성공 증빙으로 해석하지 않는다.
