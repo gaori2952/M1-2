@@ -8,6 +8,7 @@ from app.repository import create, identity
 
 from .memory_store import MemoryStore
 from .test_chat import draft, idea, reply
+from .test_image_reviews import Reviewer
 
 
 class PreviewGenerator:
@@ -104,4 +105,5 @@ app = create_app(
     store=store,
     verify_token=lambda token: {"uid": token},
     generator=PreviewGenerator(),
+    image_reviewer=Reviewer(),
 )

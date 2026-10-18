@@ -1,6 +1,7 @@
 import { connectAuth } from "./auth.js";
 import { createApi } from "./api.js";
 import { mountCardEditor, resetCardEditor } from "./card-editor.js";
+import { mountImageReview } from "./image-review.js";
 
 const $ = (selector) => document.querySelector(selector);
 const labels = {
@@ -75,6 +76,11 @@ const api = createApi(
   () => state.user,
   (text) => notice(text),
 );
+const imageReview = mountImageReview($("#image-review-root"), {
+  api,
+  getUser: () => state.user,
+  notice,
+});
 const el = (tag, text, cls) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -143,6 +149,8 @@ function saveActive() {
   else localStorage.removeItem(storageKey());
 }
 function show(view) {
+  if (imageReview.isBusy())
+    return notice("이미지 처리가 끝난 뒤 화면을 이동해 주세요.");
   if (state.editingLocks) return notice("처리가 끝난 뒤 화면을 이동해 주세요.");
   if (
     state.dirty &&
@@ -180,7 +188,7 @@ document.documentElement.classList.toggle(
   localStorage.getItem("content-studio:theme") === "dark",
 );
 window.addEventListener("beforeunload", (e) => {
-  if (state.dirty) {
+  if (state.dirty || imageReview.isBusy()) {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -1332,6 +1340,7 @@ $("#logout").onclick = () =>
   });
 async function session(user) {
   state.user = user;
+  imageReview.sessionChanged();
   $("#login").hidden = !!user;
   $("#logout").hidden = !user;
   $("#user-name").textContent = user?.displayName || "개인 작업실";
@@ -1373,7 +1382,7 @@ async function session(user) {
     $("#trend-chart").replaceChildren();
     $("#style-preview").textContent = "확인한 제작 선호가 아직 없어요.";
     renderSources();
-    show("studio");
+    show("review");
     return;
   }
   try {

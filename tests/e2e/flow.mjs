@@ -18,11 +18,12 @@ page.on("pageerror", (e) => errors.push(e.message));
 await page.route("**/auth.js*", (route) =>
   route.fulfill({
     contentType: "text/javascript",
-    body: `export async function connectAuth(callback){callback({displayName:'테스트 사용자',getIdToken:async()=> 'alice'});return {login:async()=>{},logout:async()=>callback(null)};}`,
+    body: `export async function connectAuth(callback){callback({uid:'alice',displayName:'테스트 사용자',getIdToken:async()=> 'alice'});return {login:async()=>{},logout:async()=>callback(null)};}`,
   }),
 );
 try {
   await page.goto("http://127.0.0.1:18101");
+  await page.getByRole("button", { name: "작업실", exact: true }).click();
   await page.getByText("콘텐츠 작업실", { exact: true }).waitFor();
   await page.getByRole("button", { name: "계정 데이터", exact: true }).click();
   await page.locator("#data-list tr").first().waitFor();

@@ -20,6 +20,7 @@ await page.route("**/auth.js*", (r) =>
 );
 try {
   await page.goto("http://127.0.0.1:18101");
+  await page.getByRole("button", { name: "작업실", exact: true }).click();
   await page.getByRole("button", { name: "새 카드 작업", exact: true }).click();
   await page.locator("#import-title").fill("합성 검증 · 전기장");
   await page
