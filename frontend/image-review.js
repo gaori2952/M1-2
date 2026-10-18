@@ -427,9 +427,10 @@ export function mountImageReview(root, { api, getUser, notice }) {
         images,
         previous_image,
       };
-      await persist();
-      assert();
     }
+    // Every send, including a retry, requires a durable request UUID first.
+    await persist();
+    assert();
     await renderWork();
     assert();
     const status = root.querySelector("#review-progress");
@@ -617,7 +618,7 @@ export function mountImageReview(root, { api, getUser, notice }) {
           "review-missing",
         ),
       );
-    if (historical)
+    if (historical) {
       canvas.append(
         node(
           "p",
@@ -629,7 +630,26 @@ export function mountImageReview(root, { api, getUser, notice }) {
           await renderWork();
         }),
       );
-    else {
+      if (!asset)
+        canvas.append(
+          uploadInput(
+            "review-restore-history",
+            "이 버전 이미지 다시 선택",
+            async (files) => {
+              if (!files[0]) return;
+              const restored = await prepareFile(files[0]);
+              assert();
+              if (restored.sha256 !== shown.sha256)
+                throw new Error(
+                  "이전 버전의 이미지와 달라요. 해당 버전의 같은 파일을 선택해 주세요.",
+                );
+              await putImages(account, [restored]);
+              assert();
+              await renderWork();
+            },
+          ),
+        );
+    } else {
       if (staged.has(c.card_id))
         canvas.append(
           node("p", "새 이미지 · 재검토 필요", "review-version-note"),
@@ -708,10 +728,20 @@ export function mountImageReview(root, { api, getUser, notice }) {
       );
     if (shown.result) {
       results.append(node("p", shown.result.summary, "review-result-summary"));
-      for (const r of shown.result.resolutions)
-        results.append(
-          node("p", `AI 판단: ${resolution[r.status]}`, "review-resolution"),
+      for (const r of shown.result.resolutions) {
+        const block = node("article", undefined, "review-resolution");
+        block.append(
+          node("p", `AI 판단: ${resolution[r.status]}`),
+          node(
+            "strong",
+            r.previous_finding?.location ||
+              `이전 지적 ${r.finding_id.slice(0, 8)}`,
+          ),
         );
+        if (r.previous_finding?.evidence)
+          block.append(node("p", r.previous_finding.evidence));
+        results.append(block);
+      }
       if (!shown.result.findings.length)
         results.append(node("p", "이번 검토에서 지적 없음", "review-empty"));
       for (const f of shown.result.findings)

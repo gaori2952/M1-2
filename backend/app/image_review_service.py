@@ -180,6 +180,10 @@ def run(db, reviewer, settings, uid, rid, body):
             expected = sorted(f["id"] for f in prior_findings[card["card_id"]])
             if sorted(r["finding_id"] for r in card["resolutions"]) != expected:
                 raise ValueError("Invalid finding resolution")
+            previous_by_id = {f["id"]: f for f in prior_findings[card["card_id"]]}
+            for resolution in card["resolutions"]:
+                prior = previous_by_id[resolution["finding_id"]]
+                resolution["previous_finding"] = {k: prior[k] for k in ("location", "evidence")}
         all_ids = {c["card_id"] for c in doc["cards"]}
         for connection in result["connections"]:
             if (

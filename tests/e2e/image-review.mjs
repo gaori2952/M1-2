@@ -72,12 +72,22 @@ try {
     path: "test-results/image-review.png",
     fullPage: true,
   });
+  await page.locator("[data-review-card]").nth(1).click();
+  await page
+    .locator("#review-replace")
+    .setInputFiles("test-results/review-fixtures/card-7.png");
+  await page.getByText("새 이미지 · 재검토 필요", { exact: true }).waitFor();
+  await page.locator("[data-review-card]").first().click();
   await page
     .locator("#review-replace")
     .setInputFiles("test-results/review-fixtures/card-7.png");
   await page.getByText("새 이미지 · 재검토 필요", { exact: true }).waitFor();
   await page.locator("#review-one").click();
   await page.getByText("AI 판단: 해결됨", { exact: true }).waitFor();
+  await page.locator("[data-review-card]").nth(1).click();
+  await page.getByText("새 이미지 · 재검토 필요", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "이미지 교체 취소" }).click();
+  await page.locator("[data-review-card]").first().click();
   await page.getByLabel("직접 확인했어요").first().check();
   await page.locator("#review-versions").click();
   await page.getByRole("button", { name: "버전 1 보기", exact: true }).click();

@@ -180,6 +180,7 @@
   scrollbar-width: thin;
 }
 .review-card {
+  flex-shrink: 0;
   padding: 6px;
   background: var(--surface, #fff);
   border: 1px solid var(--line, #e0e4df);

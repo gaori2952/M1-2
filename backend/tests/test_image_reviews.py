@@ -124,7 +124,11 @@ def test_batch_replace_history_checks_and_no_images_saved(image_env):
     assert updated["cards"][0]["sha256"] == replacement["sha256"]
     assert updated["cards"][0]["result"]["findings"][0]["checked"] is False
     assert updated["cards"][0]["result"]["resolutions"] == [
-        {"finding_id": fid, "status": "resolved"}
+        {
+            "finding_id": fid,
+            "status": "resolved",
+            "previous_finding": {"location": "상단 수식", "evidence": "E=F/q"},
+        }
     ]
     assert updated["connections_stale"] is True
     versions = c.get(f"/api/image-reviews/{d['id']}/cards/one/versions", headers=auth()).json()
