@@ -29,7 +29,7 @@ async function transaction(store, mode, operation) {
       tx.onerror = tx.onabort = () =>
         reject(
           new Error(
-            "브라우저 저장 공간이 부족하거나 저장이 차단됐어요. 이미지는 전송하지 않았어요.",
+            "브라우저 저장 공간이 부족하거나 저장이 차단됐어요. 이전 검토에서 저장 상태를 확인해 주세요.",
           ),
         );
     });
@@ -92,6 +92,17 @@ export async function prepareFile(file) {
   if (!["image/png", "image/jpeg", "image/webp"].includes(file.type))
     throw new Error(`${file.name}: PNG·JPEG·WebP 이미지만 사용할 수 있어요.`);
   const source = new Uint8Array(await file.arrayBuffer());
+  const signature =
+    source.slice(0, 8).join(",") === "137,80,78,71,13,10,26,10"
+      ? "image/png"
+      : source[0] === 255 && source[1] === 216 && source[2] === 255
+        ? "image/jpeg"
+        : String.fromCharCode(...source.slice(0, 4)) === "RIFF" &&
+            String.fromCharCode(...source.slice(8, 12)) === "WEBP"
+          ? "image/webp"
+          : null;
+  if (signature !== file.type)
+    throw new Error(`${file.name}: 실제 이미지 형식이 파일 종류와 달라요.`);
   if (isAnimated(source, file.type))
     throw new Error(`${file.name}: 움직이는 이미지는 지원하지 않아요.`);
   let bitmap;

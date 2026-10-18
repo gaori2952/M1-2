@@ -15,6 +15,7 @@ await page.route("**/auth.js*", (r) =>
 const failures = [];
 try {
   await page.goto("http://127.0.0.1:18101");
+  await page.getByRole("button", { name: "작업실", exact: true }).click();
   try {
     const widths = await page.evaluate(async () => {
       const { renderCard } = await import("/card-renderer.js");

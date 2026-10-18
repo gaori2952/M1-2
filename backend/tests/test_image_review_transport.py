@@ -157,3 +157,42 @@ def test_missing_key_is_explicit():
     with pytest.raises(HTTPException) as e:
         ImageReviewer(Settings()).review([asset()], {})
     assert e.value.status_code == 503
+
+
+@pytest.mark.parametrize("stop_reason", ["max_tokens", "refusal"])
+def test_anthropic_truncated_or_refused_review_is_not_success(monkeypatch, stop_reason):
+    from app import image_review_generation as m
+
+    def handle(req):
+        return sse(
+            message(
+                stop_reason=stop_reason,
+                content=[
+                    {"type": "tool_use", "id": "t", "name": "submit_review", "input": reply()}
+                ],
+            )
+        )
+
+    with httpx2.Client(transport=httpx2.MockTransport(handle)) as client:
+        monkeypatch.setattr(m, "Anthropic", lambda **kw: Anthropic(**kw, http_client=client))
+        with pytest.raises(ValueError, match="Incomplete"):
+            ImageReviewer(settings()).review([asset()], {})
+
+
+@pytest.mark.parametrize("state", ["incomplete", "failed"])
+def test_openai_incomplete_review_is_not_success(monkeypatch, state):
+    from types import SimpleNamespace
+
+    from app import image_review_generation as m
+
+    monkeypatch.setattr(
+        m,
+        "OpenAI",
+        lambda **kw: SimpleNamespace(
+            responses=SimpleNamespace(
+                parse=lambda **kw: SimpleNamespace(status=state, output_parsed=None)
+            )
+        ),
+    )
+    with pytest.raises(ValueError, match="Incomplete"):
+        ImageReviewer(Settings(openai_api_key="test-only")).review([asset()], {})
