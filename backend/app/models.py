@@ -80,12 +80,28 @@ class Idea(Input):
     source_ids: list[DocId] = Field(max_length=5)
 
 
+class DrawingElement(Input):
+    kind: Literal["line", "arrow", "circle", "rect", "text"]
+    x: float = Field(ge=0, le=1000, allow_inf_nan=False)
+    y: float = Field(ge=0, le=360, allow_inf_nan=False)
+    x2: float = Field(ge=0, le=1000, allow_inf_nan=False)
+    y2: float = Field(ge=0, le=360, allow_inf_nan=False)
+    text: str = Field(max_length=80)
+
+
+class CardStyle(Input):
+    brand: str = Field(default="N.ENGINEERING", max_length=40)
+    accent: Literal["blue", "ink", "green"] = "ink"
+    paper: Literal["white", "warm"] = "white"
+
+
 class Card(Input):
     title: Short
     body: Text
     formula: str = Field(max_length=2000)
     conditions: str = Field(max_length=2000)
     diagram: str = Field(max_length=2000)
+    artwork: list[DrawingElement] = Field(default_factory=list, max_length=24)
 
 
 class Quiz(Input):
@@ -136,6 +152,7 @@ class ChatInput(Input):
 
 
 class DraftUpdate(Input):
+    style: CardStyle | None = None
     version: int = Field(ge=1)
     draft: Draft
     feedback: str = Field(default="", max_length=2000)
@@ -144,3 +161,47 @@ class DraftUpdate(Input):
 class ReviewInput(Input):
     version: int = Field(ge=1)
     confirmed: Literal[True]
+
+
+class DraftCreate(Input):
+    request_id: UUID
+    draft: Draft
+    style: CardStyle = Field(default_factory=CardStyle)
+
+
+CardIndex = Annotated[int, Field(strict=True, ge=0, le=9)]
+CardField = Literal["title", "body", "formula", "conditions", "diagram"]
+
+
+class CardSelection(Input):
+    version: int = Field(ge=1)
+    card_indices: list[CardIndex] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode="after")
+    def unique_cards(self):
+        if len(set(self.card_indices)) != len(self.card_indices):
+            raise ValueError("카드 번호가 중복되었습니다.")
+        return self
+
+
+class ProposalInput(CardSelection):
+    request_id: UUID
+    fields: list[CardField] = Field(min_length=1, max_length=5)
+    instruction: Text
+
+
+class ProposedCard(Input):
+    card_index: CardIndex
+    card: Card
+    findings: list[Text] = Field(max_length=8)
+
+
+class CardReviewReply(Input):
+    summary: Text
+    cards: list[ProposedCard] = Field(min_length=1, max_length=10)
+
+
+class RestoreInput(Input):
+    version: int = Field(ge=1)
+    revision_id: DocId
+    card_index: CardIndex

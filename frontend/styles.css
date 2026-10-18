@@ -1304,3 +1304,303 @@ footer {
     max-height: 170px;
   }
 }
+
+/* Page-oriented editing studio. The artwork itself never inherits app dark mode. */
+.studio-start {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+  background: linear-gradient(115deg, var(--surface), var(--soft));
+}
+.studio-start p {
+  line-height: 1.9;
+  color: var(--muted);
+}
+.start-example {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+}
+.start-example span {
+  display: grid;
+  place-content: center;
+  width: 70px;
+  height: 90px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+.start-example span:nth-child(2) {
+  color: var(--blue);
+  border: 2px solid var(--blue);
+  transform: translateY(-12px);
+}
+#recent-drafts {
+  margin: 16px 0 32px;
+}
+.recent-draft h3 {
+  margin: 14px 0 22px;
+}
+.planning-tools {
+  margin-top: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.planning-tools > summary {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.planning-tools #new-chat {
+  margin-bottom: 16px;
+}
+#card-import {
+  margin-bottom: 24px;
+}
+.import-options {
+  display: flex;
+  gap: 20px;
+  margin: 16px 0;
+}
+.card-overview {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 28px;
+}
+.card-thumb {
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 0;
+  background: var(--surface);
+}
+.card-thumb.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--soft);
+}
+.thumb-open {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  padding: 8px;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.thumb-art {
+  aspect-ratio: 1;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.thumb-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.card-thumb .check {
+  margin: 0;
+  padding: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.card-edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  align-items: start;
+  gap: 22px;
+}
+.card-page {
+  min-width: 0;
+}
+.card-preview {
+  margin: 14px auto 20px;
+  max-width: 620px;
+  border: 1px solid var(--line);
+  box-shadow: 0 5px 22px #0f172a0a;
+}
+.card-preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.card-inputs {
+  display: grid;
+  gap: 14px;
+}
+.inspector {
+  position: sticky;
+  top: 24px;
+  min-width: 0;
+}
+.inspector > button {
+  width: 100%;
+  margin: 8px 0;
+}
+.inspector fieldset {
+  border: 0;
+  padding: 0;
+  margin: 16px 0;
+}
+.scope-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scope-fields legend {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.scope-fields .check {
+  padding: 5px 8px;
+  margin: 0;
+  background: var(--bg);
+  border-radius: 6px;
+}
+.selection-count {
+  color: var(--blue);
+  font-weight: 600;
+}
+.preview-error {
+  color: #b42318;
+  background: #fff1ef;
+  padding: 12px;
+  line-height: 1.7;
+  border-radius: 6px;
+}
+.proposal-area {
+  margin: 28px 0;
+}
+.proposal-area:empty {
+  display: none;
+}
+.proposal-diff {
+  margin-bottom: 16px;
+}
+.diff-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 12px 0;
+}
+.diff-columns > div {
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  min-width: 0;
+}
+.diff-columns pre,
+.card-history pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  line-height: 1.8;
+  font-size: 13px;
+}
+.diff-preview svg {
+  width: 100%;
+  height: auto;
+}
+.review-finding {
+  padding-left: 12px;
+  border-left: 3px solid var(--blue);
+  line-height: 1.8;
+}
+.drawing-editor,
+.template-settings {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.drawing-editor summary,
+.template-settings summary,
+.quiz-editor summary,
+.card-history summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.drawing-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.drawing-row label:first-child,
+.drawing-row label:nth-last-child(2) {
+  grid-column: span 2;
+}
+.drawing-row input,
+.drawing-row select {
+  padding: 8px;
+}
+.export-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.quiz-editor {
+  margin-top: 24px;
+}
+.quiz-editor > summary {
+  margin-bottom: 16px;
+}
+.card-workbench [hidden] {
+  display: none !important;
+}
+.card-history button {
+  text-align: left;
+  width: 100%;
+  margin-bottom: 10px;
+}
+@media (max-width: 1100px) {
+  .card-edit-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 14px;
+  }
+}
+@media (max-width: 850px) {
+  .card-edit-layout {
+    grid-template-columns: 1fr;
+  }
+  .inspector {
+    position: static;
+  }
+  .card-overview {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .card-thumb .check {
+    font-size: 10px;
+    padding: 4px;
+  }
+}
+@media (max-width: 540px) {
+  .card-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .start-example {
+    display: none;
+  }
+  .diff-columns {
+    grid-template-columns: 1fr;
+  }
+  .import-options {
+    flex-direction: column;
+  }
+  .card-page {
+    padding: 14px;
+  }
+}

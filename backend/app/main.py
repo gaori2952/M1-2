@@ -8,6 +8,7 @@ from .anthropic_generation import AnthropicGenerator
 from .config import Settings
 from .generation import OpenAIGenerator
 from .routes.chat import router as chat_router
+from .routes.editor import router as editor_router
 from .routes.resources import router
 from .store import Firebase, FirestoreStore
 
@@ -53,6 +54,7 @@ def create_app(settings=None, *, store=None, verify_token=None, generator=None):
 
     app.include_router(router)
     app.include_router(chat_router)
+    app.include_router(editor_router)
     return app
 
 

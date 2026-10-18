@@ -6,11 +6,17 @@
     "test:e2e": "node tests/e2e/flow.mjs",
     "format:check": "prettier --check frontend/*.js frontend/*.mjs frontend/*.html frontend/*.css tests/e2e/*.mjs",
     "test:build": "node --test tests/build.test.mjs",
-    "test:durability": "node tests/e2e/durability.mjs"
+    "test:durability": "node tests/e2e/durability.mjs",
+    "test:editor": "node tests/e2e/editor.mjs",
+    "test:editor-regressions": "node tests/e2e/editor-regressions.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0",
     "prettier": "^3.6.0"
   },
-  "packageManager": "pnpm@11.25.0"
+  "packageManager": "pnpm@11.25.0",
+  "dependencies": {
+    "fflate": "0.8.2",
+    "mathjax": "3.2.2"
+  }
 }

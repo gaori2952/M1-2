@@ -11,6 +11,30 @@ from .test_chat import draft, idea, reply
 
 
 class PreviewGenerator:
+    def revise(self, request, context):
+        from copy import deepcopy
+
+        cards = []
+        for i in request.card_indices:
+            card = deepcopy(context["draft"]["cards"][i])
+            card["body"] = "합성 수정 제안: 이 본문은 도식만 선택하면 반영되면 안 됩니다."
+            card["diagram"] = "오른쪽 방향의 화살표"
+            card["artwork"] = [
+                {"kind": "arrow", "x": 180, "y": 160, "x2": 720, "y2": 160, "text": ""},
+                {"kind": "text", "x": 400, "y": 100, "x2": 400, "y2": 100, "text": "E"},
+            ]
+            cards.append(
+                {
+                    "card_index": i,
+                    "card": card,
+                    "findings": ["합성 검토: 방향과 적용 조건을 확인하세요."],
+                }
+            )
+        return {
+            "summary": "합성 테스트의 수정안입니다. 실제 AI 검증 결과가 아닙니다.",
+            "cards": cards,
+        }
+
     def generate(self, request, context, history):
         sources = [s["id"] for s in context["sources"]]
         if request.mode == "ideas":

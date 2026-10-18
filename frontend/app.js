@@ -1,5 +1,6 @@
 import { connectAuth } from "./auth.js";
 import { createApi } from "./api.js";
+import { mountCardEditor, resetCardEditor } from "./card-editor.js";
 
 const $ = (selector) => document.querySelector(selector);
 const labels = {
@@ -157,7 +158,7 @@ function show(view) {
     .querySelectorAll("nav button")
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   if (view === "history") run(loadHistory);
-  if (view === "drafts") run(loadDrafts);
+  if (view === "drafts" || view === "studio") run(loadDrafts);
 }
 function highlightNav(view) {
   document
@@ -954,6 +955,7 @@ async function send(idea = null) {
 }
 bindForm("#chat-form", () => send());
 async function loadConversation(id) {
+  $(".planning-tools").open = true;
   if (state.busy) throw new Error("현재 답변이 끝난 뒤 불러와 주세요.");
   const data = await api("/api/conversations/" + id);
   state.conversationId = id;
@@ -1019,6 +1021,7 @@ async function loadHistory() {
 async function loadDrafts() {
   const drafts = await api("/api/drafts");
   $("#draft-list").replaceChildren();
+  $("#recent-drafts").replaceChildren();
   for (const d of drafts) {
     const card = el("article", undefined, "card");
     const reviewed = d.status === "reviewed";
@@ -1038,6 +1041,15 @@ async function loadDrafts() {
       button("원고 열기", () => openDraft(d.id), "primary"),
     );
     $("#draft-list").append(card);
+    if ($("#recent-drafts").children.length < 3) {
+      const recent = el("article", undefined, "card recent-draft");
+      recent.append(
+        el("small", `카드 ${d.draft.cards.length}장 · v${d.version}`, "muted"),
+        el("h3", d.draft.title),
+        button("이어서 편집", () => openDraft(d.id), "secondary"),
+      );
+      $("#recent-drafts").append(recent);
+    }
   }
   if (!drafts.length)
     $("#draft-list").append(
@@ -1099,32 +1111,16 @@ function renderDraft() {
     field("학습 목표", d.objective, (v) => (d.objective = v)),
   );
   $("#draft-fields").append(title);
-  const cards = el("div", undefined, "draft-grid");
-  d.cards.forEach((c, i) => {
-    const card = el("div", undefined, "card");
-    card.append(
-      el("span", `CARD ${String(i + 1).padStart(2, "0")}`, "eyebrow"),
-      field("카드 제목", c.title, (v) => (c.title = v), { maxLength: 200 }),
-      field("본문", c.body, (v) => (c.body = v), {
-        multiline: true,
-        rows: 4,
-        attr: "data-card-body",
-      }),
-      field("수식 (LaTeX 원문)", c.formula, (v) => (c.formula = v), {
-        maxLength: 2000,
-      }),
-      field("적용 조건", c.conditions, (v) => (c.conditions = v), {
-        maxLength: 2000,
-      }),
-      field("도식 지시문", c.diagram, (v) => (c.diagram = v), {
-        multiline: true,
-        maxLength: 2000,
-      }),
-    );
-    cards.append(card);
+  mountCardEditor($("#draft-fields"), {
+    state,
+    api,
+    notice,
+    run,
+    editingOperation,
+    renderDraft,
   });
-  $("#draft-fields").append(cards);
-  const quiz = el("div", undefined, "card");
+  const quiz = el("details", undefined, "card quiz-editor");
+  quiz.append(el("summary", "퀴즈와 해설 편집"));
   quiz.append(
     el("h2", "같은 개념의 퀴즈"),
     field("질문", d.quiz.question, (v) => (d.quiz.question = v), {
@@ -1183,6 +1179,7 @@ $("#save-draft").onclick = () =>
           body: {
             version: state.draft.version,
             draft: state.draft.draft,
+            style: state.draft.style || null,
             feedback: $("#draft-feedback").value,
           },
         });
@@ -1211,7 +1208,10 @@ $("#review-draft").onclick = () =>
     }),
   );
 $("#export-draft").onclick = () =>
-  download("content-draft.json", state.draft.draft);
+  download("content-draft.json", {
+    draft: state.draft.draft,
+    style: state.draft.style,
+  });
 $("#export-markdown").onclick = () => {
   const d = state.draft.draft;
   const text =
@@ -1232,6 +1232,88 @@ $("#export-markdown").onclick = () => {
     d.source_ids.join(", ");
   download("content-draft.md", text, "text/markdown");
 };
+let importPending;
+$("#new-card-work").onclick = () => {
+  $("#card-import").hidden = false;
+  $("#import-title").focus();
+};
+$("#close-import").onclick = () => ($("#card-import").hidden = true);
+$("#import-json").onchange = () =>
+  run(async () => {
+    const file = $("#import-json").files[0];
+    if (!file) return;
+    if (file.size > 300000)
+      throw new Error("JSON 파일은 300KB 이하로 가져와 주세요.");
+    const text = await file.text();
+    JSON.parse(text);
+    $("#import-text").value = text;
+    notice("JSON 파일을 읽었어요. 카드로 가져오기를 눌러 저장하세요.");
+  });
+bindForm("#card-import", async () => {
+  if (state.dirty) throw new Error("편집 중인 원고를 먼저 저장해 주세요.");
+  const raw = $("#import-text").value.trim();
+  const title = $("#import-title").value.trim() || "새 카드뉴스";
+  let draft, style;
+  if (raw.startsWith("{")) {
+    const parsed = JSON.parse(raw);
+    draft = parsed.draft || parsed;
+    style = parsed.style;
+  } else {
+    const pages = raw
+      ? raw.split(/^---\s*$/m).filter((p) => p.trim())
+      : Array.from(
+          { length: Number($("#import-count").value) },
+          (_, i) => `카드 ${i + 1}\n여기에 내용을 작성하세요.`,
+        );
+    if (pages.length < 4 || pages.length > 10)
+      throw new Error(
+        "카드는 4~10장으로 나눠 주세요. 카드 사이는 --- 한 줄로 구분합니다.",
+      );
+    draft = {
+      title,
+      objective: "직접 가져온 원고 · 검토 후 사용",
+      cards: pages.map((page, i) => {
+        const [heading, ...body] = page.trim().split("\n");
+        return {
+          title: heading || `카드 ${i + 1}`,
+          body: body.join("\n").trim() || heading,
+          formula: "",
+          conditions: "",
+          diagram: "",
+          artwork: [],
+        };
+      }),
+      quiz: {
+        question: "퀴즈 작성 전",
+        choices: ["보기 1", "보기 2", "보기 3", "보기 4"],
+        answer_index: 0,
+        explanation: "해설 작성 전",
+        choice_explanations: [
+          "확인 필요",
+          "확인 필요",
+          "확인 필요",
+          "확인 필요",
+        ],
+      },
+      review_items: ["수식·도식·정답을 직접 확인하세요."],
+      source_ids: [],
+    };
+  }
+  const payload = { draft, ...(style ? { style } : {}) };
+  const fingerprint = JSON.stringify(payload);
+  if (importPending?.fingerprint !== fingerprint)
+    importPending = { fingerprint, request_id: crypto.randomUUID() };
+  state.draft = await api("/api/drafts", {
+    method: "POST",
+    body: { ...payload, request_id: importPending.request_id },
+  });
+  importPending = null;
+  state.dirty = false;
+  $("#card-import").hidden = true;
+  $("#card-import").reset();
+  renderDraft();
+  notice("카드를 가져왔어요. 각 카드를 열어 이어서 편집하세요.");
+});
 $("#login").onclick = () =>
   run(async () => {
     if (!auth)
@@ -1260,6 +1342,7 @@ async function session(user) {
     state.series = [];
     state.conversationId = null;
     state.draft = null;
+    resetCardEditor();
     state.dirty = false;
     state.lastDraftId = null;
     state.pending = null;
@@ -1272,6 +1355,7 @@ async function session(user) {
       "top-list",
       "history-list",
       "draft-list",
+      "recent-drafts",
       "series-list",
       "data-list",
     ])
@@ -1293,7 +1377,12 @@ async function session(user) {
     return;
   }
   try {
-    await Promise.all([loadData(), loadContents(), loadPreferences()]);
+    await Promise.all([
+      loadData(),
+      loadContents(),
+      loadPreferences(),
+      loadDrafts(),
+    ]);
     const id = localStorage.getItem(storageKey());
     if (id) {
       try {
