@@ -33,6 +33,10 @@ if (
   throw new Error(
     "Production requires HTTPS API_BASE_URL and Firebase public configuration.",
   );
+if (process.env.VERCEL && !/^AIza[A-Za-z0-9_-]{35}$/.test(raw.apiKey))
+  throw new Error(
+    "Firebase apiKey is malformed or masked. Use the original public Web API key from Firebase project settings, not the masked display value.",
+  );
 const config = `window.APP_CONFIG = ${JSON.stringify({ apiBaseUrl: api.href.replace(/\/$/, ""), firebase: raw })};\n`;
 await writeFile(new URL("config.js", root), config);
 await mkdir(new URL("public/", root), { recursive: true });

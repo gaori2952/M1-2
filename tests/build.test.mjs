@@ -16,7 +16,7 @@ async function fixture(fn) {
   }
 }
 const firebase = {
-  apiKey: "public-web-key",
+  apiKey: "AIza" + "A".repeat(35),
   authDomain: "example.firebaseapp.com",
   projectId: "example",
 };
@@ -61,5 +61,26 @@ test("production rejects missing config and private fields", () =>
       );
       assert.notEqual(result.status, 0);
       assert.ok(!result.stderr.includes("never-echo-this"));
+    }
+  }));
+
+test("production rejects a masked Firebase key before publishing it", () =>
+  fixture(async (dir) => {
+    for (const key of ["AIzaAAAA" + "•".repeat(31), "AIza" + "*".repeat(35)]) {
+      const result = spawnSync(
+        process.execPath,
+        [join(dir, "build-config.mjs")],
+        {
+          env: {
+            ...process.env,
+            VERCEL: "1",
+            API_BASE_URL: "https://api.example.com",
+            FIREBASE_WEB_CONFIG: JSON.stringify({ ...firebase, apiKey: key }),
+          },
+          encoding: "utf8",
+        },
+      );
+      assert.notEqual(result.status, 0);
+      assert.ok(!result.stderr.includes(key));
     }
   }));
