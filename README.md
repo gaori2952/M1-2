@@ -1,284 +1,172 @@
-# Contents · 선택한 카드만 고치는 콘텐츠 작업실
+# Next Post · 팔로워 성장 비서
 
-GPT에서 만든 원고를 가져와 **카드별 검토 → 수정 전후 비교 → 선택한 항목만 반영 → 카드별 복원 → PNG 내보내기**로 완성하는 개인 작업실입니다. 제목·본문·수식·적용 조건·도식의 수정 범위를 지정하며, AI가 다른 부분을 바꾸려 해도 서버가 선택 범위 밖의 변경을 적용하지 않습니다.
+내 Instagram 게시 기록을 Buffer에서 불러와 **다음에 만들 콘텐츠와 그 이유를 제안하는 개인 AI 비서**입니다. 최근 캡션·질문과 관련된 글·팔로우 전환 기록을 함께 참고해 제목, 구성, 기존 글에서 확장할 점을 보여줍니다. 사용자의 목표는 팔로워 성장입니다. 게시 시간 비교와 게시 결과 기록은 선택 기능입니다.
 
-## 카드 편집 시작하기
+## 사용하는 순서
 
-1. **새 카드 작업**에서 제목과 원고를 붙여넣습니다. 첫 줄을 카드 제목으로 쓰고 카드 사이는 `---` 한 줄로 구분합니다(4~10장). 원고를 비워 두면 빈 카드로 시작합니다. 기존 원고함과 내보낸 JSON도 열 수 있습니다.
-2. 썸네일을 눌러 편집할 카드를 엽니다. 직접 수정한 내용은 **원고 저장**으로 저장합니다.
-3. 검토할 카드의 체크박스와 수정 허용 항목을 고릅니다. 예: **3번 + 도식**을 고르고 “화살표 방향만 고쳐줘”를 요청합니다.
-4. **검토·수정안 받기**에서 전후 차이를 확인하고, 적용할 카드를 선택한 뒤 반영합니다. 이 단계 전까지 원고는 바뀌지 않습니다.
-5. **현재 카드의 수정 이력**에서 이전 내용을 확인해 그 카드만 복원할 수 있습니다.
-6. **현재 카드 PNG** 또는 **전체 PNG · ZIP**으로 1080×1080 이미지를 내보냅니다. ZIP에는 번호순 PNG와 재편집용 JSON이 포함됩니다. 글 넘침·수식 오류가 있는 경우 내보내기를 차단합니다.
+1. Google 로그인 후 **Buffer 새로 불러오기**를 누릅니다. 게시물·캡션·첨부물 정보·실제 게시 시각·성과·설정된 게시 일정을 읽습니다.
+2. **다음 게시**에서 만들고 싶은 형식을 고르고 **AI에게 물어보기**에 질문합니다. 예: “내 최근 게시물을 보고 다음 콘텐츠 3개와 추천 이유를 알려줘.” 관심 주제와 가능한 시간은 비워도 됩니다.
+3. 콘텐츠 추천은 **제목/첫 장 문구, 추천 이유, 기존 글에서 바꿀 점, 제작 구성, 참고 게시물 링크와 지표**로 표시합니다. 질문·답변·당시 근거·추천 카드를 자동 저장하며 대화 기록에서 복원합니다. 시간 질문에는 시간으로 답하도록 구분합니다.
+4. 날짜도 비교하고 싶으면 **게시 시간 비교 (선택)**를 펼치고 다음 7일 중 실제 가능한 시간을 추가합니다. **시간 후보 확인**은 AI 호출 없이 최대 두 후보와 이유·비교 게시물을 보여줍니다. 시간대 비교에는 콘텐츠 주제를 반영하지 않습니다.
+5. 시간 후보의 **이 시간으로 실험 저장**을 누른 뒤, 실제 게시 후 **지난 게시**에서 해당 글을 직접 연결합니다. 계획과 실제 게시 시간의 차이, 관측 성과와 자료 부족을 확인합니다.
+6. **내 데이터**에서도 Buffer 자료를 갱신할 수 있습니다. 기존 계정 일별 기록의 CRUD·요약·대화 기록을 함께 제공합니다. CSV는 **이전 일별 자료 추가 (선택)** 안의 보조 기능이며, Instagram 정보를 조회하는 데 필요하지 않습니다.
 
-수식은 MathJax로 렌더링하며 도식은 선·화살표·원·사각형·라벨(카드당 최대 24개)로 편집합니다. 고정 디자인의 브랜드·색·종이 색은 사용자가 설정하며 AI는 바꾸지 않습니다. 현재 기본 템플릿은 단순한 N.ENGINEERING 스타일입니다. 기존 PNG를 자동으로 요소로 분해하거나 임의의 기존 디자인을 그대로 복제하지는 않습니다. 복잡한 과학 그림의 정확성과 게시 적합성은 직접 검토해야 합니다.
+기존 원고·카드 제작·이미지 검토는 **기존 제작 도구**에 보관했습니다. 기존 저장 자료와 API를 삭제하지 않습니다.
 
-기존 기획 채팅과 계정 시계열 분석은 **기획·데이터 상담**에서 사용할 수 있습니다. [M1-1](https://github.com/gaori2952/M1-1)의 계정 지표는 계정 상황을 이해하는 보조 근거이며 특정 게시물의 성과나 인과관계를 설명하지 않습니다.
+![콘텐츠 추천과 근거 — 합성 자료·테스트 생성기](docs/screenshots/growth-content.png)
 
 ## 현재 상태
 
-**Render(백엔드)·Vercel(프론트)에 배포**했고, 실제 Firebase(인증·Firestore)와 Anthropic 호환 게이트웨이(COPA, `claude-sonnet-4`)로 동작을 확인했습니다.
+- 성장 중심 UI, Buffer 읽기 전용 수집, 형식별 통계, 시간 후보, 실험 저장·게시물 연결, AI 컨텍스트, CSV 가져오기를 구현한 개발 브랜치입니다.
+- 실제 Buffer 읽기와 사용자 승인 후 본인 Firestore에 저장·재조회하는 연결을 확인했습니다. 로컬 테스트는 별도로 수행합니다. 아래 화면은 **합성 데이터와 테스트 생성기**이며 실제 계정 성과나 AI 답변의 증명이 아닙니다.
+- 성장 상담도 기존 `LLM_PROVIDER` 설정을 사용합니다. 현재 사용자의 Anthropic 호환 API로 실제 성장 상담 응답을 확인했습니다. OpenAI 키를 추가로 요구하지 않습니다. 선택한 제공업체의 키가 없을 때만 설정 필요 상태를 표시합니다.
+- 실제 개인 자료 검증에서는 질문에 맞는 콘텐츠 후보는 반환했지만, 짧은 캡션에 없는 기존 글의 내용을 추정한 문제가 남았습니다. **개인화 추천 품질 검증을 통과한 상태는 아닙니다.** 현재 입력은 캡션·성과이며 이미지 본문은 읽지 않습니다.
+- 새 기능의 운영 배포는 아직 하지 않았습니다. 로컬 구현, Git 커밋, 운영 배포 상태를 구분합니다.
+- 기존 운영 주소: [프론트](https://m1-2-frontend-theta.vercel.app/) · [백엔드](https://m1-2-6ae7.onrender.com/) · [Swagger](https://m1-2-6ae7.onrender.com/docs). 이 링크에 새 기능이 반영됐다는 의미는 아닙니다.
 
+검증 명령과 범위는 [검증 기록](docs/verification.md)에 있습니다.
 
-- 프론트 URL: https://m1-2-frontend-theta.vercel.app
-- 백엔드 API URL: https://m1-2-6ae7.onrender.com
-- Swagger URL: https://m1-2-6ae7.onrender.com/docs
+## 수치와 추천의 의미
 
-> 백엔드는 Render 무료 플랜이라 15분간 요청이 없으면 잠듭니다. 첫 요청은 50초 이상 걸릴 수 있으며, 화면은 8초 이상 대기 시 안내 문구를 표시합니다.
-> 접근은 `ALLOWED_USER_UIDS`에 등록한 Google 계정만 가능합니다.
+- **팔로우 지표 제공 게시물:** Buffer가 `follows` 숫자를 제공한 게시물 수이며 **0건도 포함**합니다. 성공한 게시물 수가 아닙니다.
+- 기본 팔로워 상담에는 팔로우·도달 지표를 전달합니다. 질문에 저장·공유·조회 등 다른 지표를 명시하면 해당 성과도 전달합니다. 원본 지표는 별도로 유지합니다.
+- **팔로우 수:** 플랫폼이 해당 게시물에 귀속한 값입니다. 전체 팔로워 수 또는 계정 순증이라고 바꾸어 해석하지 않습니다.
+- **전환율:** `게시물 팔로우 / 도달 × 100`. 팔로우가 알려지고 도달이 양수일 때만 계산합니다. 누락은 0이 아닙니다.
+- 릴스·카드뉴스·단일 게시물·스토리를 따로 비교합니다. 팔로우 지표가 없는 형식은 조회·저장·공유를 팔로우의 정답으로 사용하지 않습니다.
+- 시간대는 계정 시간대의 실제 게시 시각을 3시간 구간으로 묶습니다. 구간당 3개·서로 다른 2일 이상인 구간이 둘 이상일 때 관측 비교를 제공합니다. 이는 제품의 최소 표본 규칙이며 통계적 유의성이나 원인 규명이 아닙니다.
+- **현재 누적 성과**는 게시 후 경과 시간이 서로 다른 탐색 자료입니다. **7일차 부근 관측**은 실제로 저장된 소스 갱신 시점이 게시 후 6~8일인 자료만 사용합니다. 과거 값을 현재 누적값에서 만들어 내지 않습니다.
+- 비교 표본이 부족한 시간은 **새 실험**으로 표시합니다. 기대 팔로우 수·개선 확률·최적 시간 보장은 제공하지 않습니다.
+- Buffer의 성과 API는 실험적이며 개인 키를 통한 개인 사용 범위입니다. 지표 갱신은 지연될 수 있습니다. 마지막 성공 수집 시각과 지표 갱신 시각을 확인하세요. [공식 제한 안내](https://support.buffer.com/en-us/articles/what-is-buffers-api-GtIYIQilz5)
+- 계정 일별 팔로우와 게시물별 팔로우는 별개입니다. 일별 값을 게시물에 나누어 배정하지 않습니다.
 
-[아키텍처](docs/architecture.md) · [구현 계획](docs/implementation-plan.md) · [검증 결과와 제한](docs/verification.md)
+콘텐츠 상담은 질문·관심 주제와 관련된 캡션 최대 2개, 선택 형식의 전환율 상위 최대 2개, 최근 게시물을 섞어 상세 근거를 최대 5개 선택합니다. 최근 최대 60개 캡션 앞부분도 주제 참고·중복 방지에 활용하고 인용할 수 있습니다. 상세 근거에 없는 게시물은 화면에 **캡션 일부 참고 · 성과 수치 미포함**으로 구분합니다. 팔로우가 없는 릴스도 주제 참고로 활용하지만 성장 성과라고 해석하지 않습니다. 이미지 자체를 읽거나 계정의 모든 게시 이력을 확인하는 기능은 아닙니다. 높은 지표는 기획 판단의 참고이며 추천 주제의 효과를 증명하지 않습니다.
 
-![카드별 교정 화면 — 합성 검증 자료](docs/screenshots/card-editor.png)
+## 기술과 데이터 흐름
 
-## 화면 구성
+- Python 3.10+, FastAPI, Pydantic, firebase-admin, OpenAI SDK, Anthropic SDK, python-dotenv
+- 바닐라 HTML/CSS/JavaScript, Firebase Authentication Google 로그인
+- Firebase Firestore: 사용자 소유권 검사 후 서버에서만 접근
+- Render 백엔드, Vercel 정적 프론트
+- 차트는 SVG로 구현하며 UI 프레임워크·벡터 DB·새 에이전트 런타임은 사용하지 않습니다.
 
-| 메뉴 | 하는 일 |
-| --- | --- |
-| **작업실** | 새 카드 작업, 원고·JSON 가져오기, 최근 작업 이어서 편집. 기획·데이터 상담을 펼치면 기존 채팅을 이용할 수 있습니다. |
-| **원고함 / 편집실** | 카드별 수정·검토 제안·전후 비교·선택 적용·이력 복원, 수식·도식 미리보기, 개별 PNG / ZIP / JSON / Markdown 다운로드. |
-| **콘텐츠 라이브러리** | 원고를 붙여넣기만 하면 첫 줄이 제목이 됩니다. 게시물 성과(조회·도달·좋아요·댓글·저장·공유)와 분류 정보는 필요할 때만 펼쳐 입력합니다. 검색 지원. |
-| **계정 데이터** | 계정 일별 지표 조회·추가·수정. 최근 7일·30일·90일·전체 빠른 기간, 0과 결측 구분, 이전 동일 기간 비교. |
-| **대화 기록** | 저장된 대화를 불러오거나 삭제합니다. |
-| **제작 선호** | 독자·설명 순서·문체·수식·카드 구성·퀴즈 항목을 눌러 고르면 지시문이 자동 작성됩니다. 시리즈별 규칙은 자주 쓰는 문구 버튼으로 채웁니다. 확인 후 저장한 내용만 적용됩니다. |
+```text
+Google 로그인 → FastAPI 소유 UID 검사
+  → Buffer 고정 읽기 쿼리 → 전체 페이지 검증
+  → Firestore 새 수집 세대 저장 → 완료 후 성공 포인터 변경
+  → Python 통계·시간 후보 계산 → 화면
+  → 질문 + 계정 일별 요약 + 관련 게시물 → 설정한 AI 제공업체
+  → 질문·답변·당시 근거 자동 저장 → 게시 실험 → 실제 게시물 연결
+```
 
-## 구현한 기능
-
-- 카드별 검토 제안 API: 요청 UUID 재사용, 공통 일일 AI 한도, 모델 응답 구조 검증
-- 저장된 제안만 서버에서 적용하며 선택하지 않은 카드·항목·퀴즈·디자인 보존
-- 원고 버전이 달라지면 409로 오래된 수정안 차단, 적용 중복 재시도 방지
-- 카드별 수정 이력과 한 카드만 복원, 기존 원고 호환
-- 동일한 SVG 렌더러를 사용하는 미리보기·1080×1080 PNG·번호순 ZIP 내보내기
-
-- Google 로그인 + 허용 UID 검사, 모든 데이터 소유권 검사, 브라우저의 Firestore 직접 접근 차단
-- 게시물별 성과 입력과 성과 순위(조회 대비 반응, 저장·공유 가중), 성과 근거를 밝히는 추천 프롬프트
-- 시계열 CRUD, 유효 관측·결측 분리, 이전 동일 기간과 비교하는 요약
-- 원고 라이브러리 CRUD, 선택 원고 또는 키워드 검색(최대 5개, 원고당 12,000자)
-- 일반 선호와 시리즈별 규칙의 명시적 확인·저장(수정 기록이 자동으로 선호가 되지 않음)
-- 후속 후보 정확히 3개, 카드 4~10장과 4지선다 퀴즈, 사람이 확인할 review_items
-- 응답 구조·근거 ID 검사, request_id 중복 방지, 대화별 동시 생성 차단, 일일 요청 한도
-- 저장 결과가 불확실할 때 같은 request_id로 복구, 미저장 원고 보호, 저장 중 편집 잠금, 원고 버전 충돌 방지
-- 생성 제공자 선택: OpenAI(Responses API 구조화 출력) 또는 Anthropic 호환(스트리밍 + 강제 도구 호출)
-- 반응형 바닐라 화면, 다크 모드, 그래프, JSON/Markdown 다운로드, 빌드마다 자산 버전 해시
-
-## 기술 스택
-
-Python 3.10+ / FastAPI / Pydantic / firebase-admin / OpenAI Python SDK 또는 Anthropic Python SDK / python-dotenv.
-프론트는 HTML·CSS·JavaScript와 Firebase Auth 웹 SDK이며 UI 프레임워크를 사용하지 않습니다.
-배포 대상은 백엔드 Render, 프론트 Vercel입니다.
+수집이 중간에 실패하면 이전 성공 자료를 유지합니다. 최근 60분 내 성공 자료는 캐시를 사용하고 동기화 시도는 사용자별 UTC 하루 5회입니다. 모델 요청은 별도의 일일 한도를 사용합니다. 자동 게시·예약 변경·댓글/DM 처리는 하지 않습니다.
 
 ## 로컬 실행
 
-Python 3.10+와 Node.js 22+가 필요합니다. 저장소 루트에서 실행하세요.
+Python 3.10+와 Node.js 22+가 필요합니다. 저장소 루트에서 실행합니다.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r backend/requirements.lock
 cp .env.example .env
-# .env에 백엔드 설정 입력
+# .env에 아래 서버 환경 변수 설정
 uvicorn app.main:app --app-dir backend --reload --port 8000
 ```
-
-> Claude Code 터미널처럼 셸에 `ANTHROPIC_BASE_URL`이 이미 설정된 환경에서는 그 값이 `.env`보다 우선합니다(python-dotenv 기본 동작).
-> 게이트웨이를 쓸 때는 `env -u ANTHROPIC_BASE_URL uvicorn app.main:app --app-dir backend --port 8000`처럼 비우고 실행하세요.
 
 다른 터미널에서:
 
 ```bash
 cp frontend/.env.example frontend/.env.local
-# frontend/.env.local에 공개 Firebase 웹 설정 입력
+# 공개 Firebase 웹 설정과 API_BASE_URL 입력
 node --env-file=frontend/.env.local frontend/build-config.mjs
 python3 -m http.server 3000 --directory frontend/public
 ```
 
-http://localhost:3000 접속. `file://`로 HTML을 직접 열지 마세요.
-환경 변수 변경 후 백엔드를 재시작하고 프론트를 다시 빌드하세요.
+[로컬 화면](http://localhost:3000) · [로컬 Swagger](http://localhost:8000/docs). 환경 변수 변경 후 API 재시작·프론트 재빌드가 필요합니다.
 
-## Firebase / 생성 모델 준비
+### 서버 환경 변수
 
-1. Firebase 콘솔에서 프로젝트와 웹 앱을 생성합니다.
-2. Authentication → Sign-in method에서 Google을 활성화합니다. Authorized domains에 `localhost`와 실제 Vercel 도메인을 등록합니다.
-3. Firestore Database를 생성하고 [firestore.rules](firestore.rules)를 적용합니다. 브라우저 직접 DB 접근은 거부하고 백엔드에서만 접근합니다.
-4. Project settings → Service accounts에서 서비스 계정 JSON을 준비합니다. 파일 내용을 `.env`의 `FIREBASE_SERVICE_ACCOUNT_JSON`에 단일 줄 JSON으로 넣습니다. 예: `FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'`. 키 파일이나 실제 값은 Git·채팅에 올리지 마세요.
-5. 웹 앱의 Firebase configuration을 `frontend/.env.local`의 `FIREBASE_WEB_CONFIG`에 넣습니다. 이것은 공개 클라이언트 설정이며 서비스 계정 JSON과 다릅니다.
-6. 화면에서 Google 로그인 한 번 후 Firebase Authentication 사용자 목록에서 UID를 확인하고 백엔드 `ALLOWED_USER_UIDS`에 입력합니다. 그 전까지 백엔드의 403 응답은 정상적인 접근 제한입니다.
-7. 생성 모델을 고릅니다. 기본 `LLM_PROVIDER=openai`는 `OPENAI_API_KEY`와 API 사용 권한이 있는 `OPENAI_MODEL`이 필요합니다(ChatGPT 구독과 API 이용은 별개). Anthropic 호환 게이트웨이(예: COPA)를 쓰려면 `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`(발급받은 가상 키), `ANTHROPIC_MODEL`을 설정합니다. 이 경로는 강제 도구 호출로 구조화 응답을 받으므로 강제 `tool_choice`를 거부하는 모델(Opus 5.5, Sonnet 5.5, Fable 5.1)은 사용할 수 없습니다.
-8. 서버 재시작 후 CRUD부터 확인하고 모델 호출은 후보/원고 각 1회로 작게 시작하세요.
+- `OPENAI_API_KEY`: `LLM_PROVIDER=openai`로 선택했을 때 필요한 서버 키. 채팅에 붙여 넣거나 Git에 저장하지 않습니다.
+- `OPENAI_MODEL`: 계정에서 이용 가능하고 구조화 출력을 지원하는 실제 OpenAI 모델 ID.
+- `FIREBASE_SERVICE_ACCOUNT_JSON`: Firebase 서비스 계정 JSON. 공개 웹 설정과 다릅니다.
+- `ALLOWED_USER_UIDS`: 앱 사용을 허용한 Firebase UID 목록. 비어 있으면 차단합니다.
+- `ALLOWED_ORIGINS`: 정확한 프론트 origin 목록. 로컬 예: `http://localhost:3000`.
+- `BUFFER_API_KEY`: `account:read`, `posts:read`, `insights:read` 범위의 개인 읽기 키.
+- `BUFFER_CHANNEL_ID`: 본인의 연결된 Instagram 채널 ID.
+- `BUFFER_OWNER_UID`: 이 Buffer 키의 자료에 접근할 Firebase UID 한 개. 다른 허용 UID에는 공유하지 않습니다.
+- `MAX_OUTPUT_TOKENS`: 모델 출력 상한. `DAILY_REQUEST_LIMIT`: 사용자별 UTC 일일 모델 요청 시도 한도.
+- `LLM_PROVIDER`: 성장 상담과 기존 제작 도구가 함께 사용하는 `openai`/`anthropic` 설정입니다. 이미 준비한 제공업체를 그대로 사용합니다.
+- Anthropic을 선택한 경우 `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, 선택 `ANTHROPIC_BASE_URL`을 설정합니다.
 
-## 환경 변수
+### 프론트 환경 변수
 
-| 위치 | 변수 | 설명 |
-| --- | --- | --- |
-| 백엔드 | LLM_PROVIDER | `openai`(기본) 또는 `anthropic`. 선택한 제공자의 키만 필요 |
-| 백엔드 | OPENAI_API_KEY | OpenAI API 키 |
-| 백엔드 | OPENAI_MODEL | 기본 `gpt-6.1-sol`; 계정에서 사용할 수 있는 구조화 출력 지원 모델 |
-| 백엔드 | ANTHROPIC_API_KEY | Anthropic 또는 호환 게이트웨이 키 |
-| 백엔드 | ANTHROPIC_BASE_URL | 호환 게이트웨이 주소. 비우면 SDK 기본값 |
-| 백엔드 | ANTHROPIC_MODEL | 기본 `claude-sonnet-4`; 게이트웨이 모델 표의 ID. 한국어 원고가 길어 이 경로에서는 `MAX_OUTPUT_TOKENS=8000` 권장. 셸에 `ANTHROPIC_BASE_URL`이 이미 있으면 `.env`보다 우선하므로 비우고 실행 |
-| 백엔드 | FIREBASE_SERVICE_ACCOUNT_JSON | 서비스 계정 JSON 문자열 |
-| 백엔드 | ALLOWED_USER_UIDS | 쉼표로 구분한 허용 Firebase UID. 비어 있으면 아무도 허용하지 않음 |
-| 백엔드 | ALLOWED_ORIGINS | 쉼표로 구분한 정확한 프론트 origin. 기본 `http://localhost:3000` |
-| 백엔드 | MAX_OUTPUT_TOKENS | 기본 4000, 허용 범위 256~8000 |
-| 백엔드 | DAILY_REQUEST_LIMIT | 사용자별 일일 모델 시도 한도, 기본 30, UTC 자정 초기화 |
-| 프론트 빌드 | API_BASE_URL | 백엔드 주소, 브라우저에 공개됨 |
-| 프론트 빌드 | FIREBASE_WEB_CONFIG | Firebase 웹 설정 JSON, 브라우저에 공개됨 |
+- `API_BASE_URL`: 백엔드 주소. Vercel 빌드에서 정적 공개 설정으로 내보냅니다.
+- `FIREBASE_WEB_CONFIG`: Firebase 공개 웹 설정 JSON. `apiKey`, `authDomain`, `projectId`, `appId` 등 허용된 웹 설정만 넣습니다. 서비스 계정·Buffer·모델 키를 넣지 않습니다.
 
-프론트 빌드는 허용된 Firebase 공개 필드만 받습니다. 모델 API 키와 서비스 계정은 백엔드(Render)에만 설정합니다.
-`.env*`, `frontend/config.js`, `frontend/public/`, `.private/`는 Git에서 제외됩니다.
+### Firebase·Buffer 준비
 
-## 개인 자료 가져오기
+1. Firebase Authentication에서 Google 로그인을 활성화하고 Authorized domains에 `localhost`와 Vercel 호스트를 등록합니다.
+2. Firestore를 생성하고 [firestore.rules](firestore.rules)를 적용합니다. Admin SDK는 규칙을 우회하므로 서버의 소유권 검사도 유지합니다.
+3. 사용할 로그인 UID를 `ALLOWED_USER_UIDS`, Buffer 자료 소유 UID를 `BUFFER_OWNER_UID`에 설정합니다.
+4. Buffer API 설정에서 읽기 범위의 개인 키를 발급해 서버에만 저장합니다. 키 만료·권한 오류는 화면에 안내하며 새 키를 코드에 하드코딩하지 않습니다.
+5. Buffer 채널 ID를 설정하고 로그인 후 **새로 불러오기**를 실행합니다. 계정의 조직에서 해당 채널을 확인한 뒤 수집합니다.
 
-M1-1 기준: 커밋 `70d0b8451a87a78433c4a40e48df48026547d636`, `data/processed/daily.csv`.
-139일 × 6지표 = 834슬롯 중 833개가 유효 수치입니다. 2026-10-14 팔로우는 결측으로 보존합니다.
-실제 CSV와 GPT 대화 원문은 이 공개 저장소에 포함하지 않습니다. 로컬 `.private/`에 준비하세요.
+## 이전 일별 자료 추가 (선택)
 
-```bash
-# 검증만 수행 (클라우드 연결 없음)
-PYTHONPATH=backend python -m scripts.import_sources --kind metrics \
-  --file .private/daily.csv --uid YOUR_FIREBASE_UID --dry-run
-# 위 결과 확인 후 실제 Firestore에 가져오기
-PYTHONPATH=backend python -m scripts.import_sources --kind metrics \
-  --file .private/daily.csv --uid YOUR_FIREBASE_UID --apply
+**Instagram 게시물·성과의 기본 수집 경로는 Buffer API입니다. CSV 등록은 필요하지 않습니다.** 이 기능은 과거 계정 일별 자료를 추가하는 선택 도구입니다. 과제의 100개 이상 시계열 관측은 기존에 보관한 일별 기록으로도 검증할 수 있으며, CSV 파일은 공개 저장소에 올리지 않습니다.
+
+```csv
+date,views,viewers,interactions,visits,follows,link_clicks
+2026-10-01,100,20,10,5,2,0
+2026-10-02,120,25,12,6,,0
 ```
 
-날짜·지표별 안정적인 ID를 사용합니다. 재수입은 기존 문서를 건너뛰어 사용자 수정을 보존합니다.
-원고 JSON은 `ContentInput` 형태의 배열입니다. `title`, `text`가 필수이며 `source`에 원본 대화/메시지 ID를 기록할 수 있습니다.
-`--kind contents`로 같은 절차를 사용합니다. 안정적인 고유 `source`를 권장합니다.
-검토 전 GPT 원고는 사실 검증 자료가 아니며 게시 상태 `unknown`, 검토 상태 `unverified`로 가져옵니다.
-원고 항목에 `performance`(`views`, `reach`, `likes`, `comments`, `saves`, `shares`, 모두 선택·0 이상 정수)를 넣으면 성과도 함께 가져옵니다. 화면에서는 라이브러리의 "게시물 성과 입력"에서 수정할 수 있습니다.
+이는 형식을 설명하는 2일 합성 예시입니다. 빈 셀은 null로 보존합니다. 최대 2MB·366일이며 같은 날짜·지표는 기존 값을 유지합니다. 가져오기 결과의 추가·건너뜀·유효·결측 개수를 확인하세요. Buffer 게시물의 누적 성과는 계정의 일별 시계열에 섞지 않습니다.
 
-## API와 구조
+## API
 
-```
-backend/app/
-  main.py              앱·CORS·오류 처리
-  auth.py, config.py   인증·설정
-  models.py            요청·모델 응답 검증
-  store.py             Firestore 어댑터
-  repository.py        소유권과 저장 연산
-  analytics.py         결정적인 통계 계산
-  content_search.py    원고 선택·키워드 검색
-  generation.py        OpenAI 구조화 응답·근거 검사
-  anthropic_generation.py  Anthropic 호환 API 강제 도구 호출 응답
-  chat_service.py      컨텍스트·예약·한도·원자적 저장
-  routes/              HTTP 엔드포인트
-frontend/              바닐라 화면과 공개 설정 빌드
-backend/tests/         테스트 전용 저장소·인증·모델
-```
+모든 `/api` 요청에는 Firebase ID token이 필요합니다. `/docs`에서 상세 스키마를 볼 수 있습니다.
 
-필수 API: `POST/GET /api/data`, `PUT/DELETE /api/data/{id}`, `GET /api/data/summary`,
-`POST/GET /api/conversations`, `GET/DELETE /api/conversations/{id}`, `POST /api/chat`.
-카드 편집 추가 API:
-- `POST /api/drafts`: 원고 / 고정 디자인 가져오기 (request_id로 중복 생성 방지)
-- `POST/GET /api/drafts/{id}/proposals`: 검토 제안 생성 / 이력 조회
-- `POST /api/drafts/{id}/proposals/{pid}/apply`: 선택 카드의 수정안 적용
-- `GET /api/drafts/{id}/revisions`: 수정 전후 이력
-- `POST /api/drafts/{id}/restore`: 지정 이력의 수정 전 카드 한 장 복원
+1. 필수 데이터: `POST/GET /api/data`, `PUT/DELETE /api/data/{id}`, `GET /api/data/summary`, `POST /api/data/import`.
+2. 필수 대화: `POST/GET /api/conversations`, `GET/DELETE /api/conversations/{id}`. 목록에는 전체 messages가 없고 상세 조회에 전체 메시지가 포함됩니다.
+3. 채팅: `POST /api/chat`. 성장 모드는 `mode: growth`와 `growth_options`를 보냅니다. `GET /api/chat/requests/{request_id}`로 응답 유실 시 상태를 조회합니다.
+4. Buffer: `GET /api/buffer/status`, `POST /api/buffer/sync`, `GET /api/buffer/sync/{request_id}`, `GET /api/buffer/posts`, `PUT /api/buffer/posts/{id}/annotation`.
+5. 성장: `GET /api/growth/summary`, `POST /api/growth/recommendations`, `POST/GET /api/growth/experiments`, `PUT /api/growth/experiments/{id}`.
 
-`card_indices`는 0부터 시작합니다. `fields`는 title/body/formula/conditions/diagram 중 선택하며 diagram은 실제 도식 요소 artwork를 함께 포함합니다. 제안 생성은 원고를 변경하지 않습니다. Firestore의 `card_proposals`와 기존 `feedback` 컬렉션 모두 owner_uid로 격리합니다.
+`growth_options`는 `format`, `topic`, `slots`(시간대가 포함된 ISO 시각 배열), `observation_mode`(`lifetime`/`seven_day`)입니다. 통계·후보 미리보기는 GPT를 사용하지 않고 서버 계산 결과를 저장합니다. 실험 생성은 저장된 요청 UUID와 후보 ID만 받아 서버에서 기준을 복사합니다.
 
-추가 API는 원고, 프로필, 시리즈, 초안 CRUD/검토입니다. 전체 계약은 `/docs`에 있습니다.
-Swagger Authorize에 Firebase ID 토큰을 입력해야 보호 API를 호출할 수 있습니다.
+신규 저장 구조는 `buffer_connections`, `buffer_syncs/{id}/posts`, `post_annotations`, `growth_recommendations`, `growth_experiments`입니다. `data`, `conversations`, `requests`, `quotas`와 기존 제작 자료는 유지합니다.
 
-- 데이터 summary는 기본 최신 기록 기준 7일. `start`와 `end`를 함께 주면 최대 366일을 조회합니다.
-- 대화 목록에는 messages가 없고 상세 API에는 시간순 messages가 있습니다.
-- 채팅은 UUID `request_id`를 받습니다. 같은 요청은 저장된 응답을 재사용하고, 다른 내용에 같은 ID를 쓰면 409입니다.
-- 요청 실패 후 새 ID로 다시 시도하는 것은 새로운 모델 호출입니다. 자동 재호출은 없습니다.
-- 동시 대화 생성은 대화별 예약으로 제한하고, 성공 메시지와 원고는 하나의 트랜잭션으로 저장합니다.
-- 프롬프트는 통계를 직접 계산하지 않습니다. `/api/data/summary`와 채팅이 같은 Python 요약 함수를 사용합니다.
-
-### 컨텍스트 주입 방식
-
-`POST /api/chat`은 `/api/data/summary`와 같은 `summarize()` 결과를 **시스템 프롬프트의 `[사용자 데이터 요약]`** 블록으로 넣습니다(`backend/app/generation.py`의 `system_prompt`).
-
-```
-당신은 사용자의 공학 교육 콘텐츠 기획·제작 비서입니다. ...(고정 지시)
-
-[사용자 데이터 요약]
-- 데이터 기간: <요약 기간>
-- 비교 기간: <이전 기간>
-- 총 레코드: <유효 관측 수>
-- 주요 지표:
-  - 조회수: 평균 <평균>, 최대 <최대값>(<날짜>), 최소 <최소값>, 합계 <합계>, 결측 <개수>, 최근 트렌드 <추세>, 이전 기간 대비 <변화율>
-  - (시청자·상호작용·프로필 방문·링크 클릭도 같은 형식)
-- 해석 제한: 계정 일별 지표는 게시물별 성과나 인과관계의 근거가 아닙니다. ...
-위 데이터를 기반으로 맞춤형 답변을 제공하세요. 요약에 없는 수치는 지어내지 마세요.
-```
-
-요약은 서버가 숫자로 계산한 신뢰 데이터라 시스템 역할에 둡니다. 반면 사용자가 저장한 원고·대화 기록·제작 선호는 프롬프트 인젝션 위험이 있는 참고 자료라 사용자 메시지의 `CONTEXT_JSON`으로 분리합니다.
-
-## 테스트
+## 검증
 
 ```bash
 pip install -r backend/requirements-dev.txt
-python -m pytest -q
-ruff check backend
-ruff format --check backend
-```
-
-브라우저 테스트에는 Playwright Chromium이 필요합니다.
-
-```bash
-corepack enable
+pytest -q
+ruff check backend/app backend/tests
 pnpm install --frozen-lockfile
-pnpm exec playwright install chromium
-# 터미널 1: 합성 자료 + 모의 모델 전용 서버
-PYTHONPATH=backend python -m uvicorn tests.preview:app --host 127.0.0.1 --port 18100
-# 터미널 2: 테스트용 공개 API 주소로 빌드 후 정적 서버
-API_BASE_URL=http://127.0.0.1:18100 node frontend/build-config.mjs
-python -m http.server 18101 --bind 127.0.0.1 --directory frontend/public
-# 터미널 3
-node tests/e2e/flow.mjs
-node tests/e2e/durability.mjs
-node --test tests/build.test.mjs
+pnpm test:build
+pnpm format:check
 ```
 
-E2E는 임시 브라우저에서 `auth.js`만 대체합니다. 운영 코드에 인증 우회 플래그는 없습니다.
-테스트용 서버는 외부에 배포하지 마세요. 반복 테스트는 새 preview 서버로 시작하세요. durability 테스트는 flow 테스트가 생성한 원고와 대화를 이어서 사용합니다.
+브라우저 검증은 로컬 합성 API `uvicorn tests.growth_preview:app --app-dir backend --port 18100`, 정적 서버 `127.0.0.1:18101`, 해당 주소로 만든 테스트용 프론트를 사용합니다. `CHROME_PATH`에 로컬 Chrome 경로를 지정하고 `pnpm test:growth`를 실행합니다. 테스트 파일만 인증 모듈을 대체하며 **합성 API를 배포하지 않습니다.**
 
-## 배포 준비
+## Render·Vercel 배포
 
-**Render**: 이 저장소를 연결해 `render.yaml` Blueprint를 사용하거나 Web Service의 Root Directory를 `backend`, Build Command를 `pip install -r requirements.lock`, Start Command를 `uvicorn app.main:app --host 0.0.0.0 --port $PORT`로 설정합니다. 위 백엔드 환경 변수를 입력하세요.
+1. **Render:** Root `backend`, Build `pip install -r requirements.lock`, Start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. 서버 환경 변수를 설정합니다. [render.yaml](render.yaml) 참고.
+2. **Vercel:** Root `frontend`, Framework `Other`, Build `node build-config.mjs`, Output `public`. `API_BASE_URL`과 공개 `FIREBASE_WEB_CONFIG`를 설정합니다.
+3. Render `ALLOWED_ORIGINS`와 Firebase Authorized domains에 실제 프론트 주소를 등록합니다.
+4. 배포 후 Swagger의 새 API와 실제 브라우저 로그인·Buffer 수집·AI 답변·데이터 저장을 확인합니다. `/health`의 `configured`는 설정 존재 여부이며 실제 외부 연결 성공을 보증하지 않습니다.
+5. Render 무료 티어의 콜드스타트를 고려해 화면은 첫 요청 지연 안내를 표시합니다. 입력을 유지하고 UUID로 동기화·대화 저장 결과를 확인할 수 있습니다.
 
-**Vercel**: Root Directory `frontend`, Framework `Other`, Build Command `node build-config.mjs`, Output Directory `public`. `API_BASE_URL`과 `FIREBASE_WEB_CONFIG`를 설정합니다. 배포 시 HTTPS API 주소와 Firebase 공개 설정이 없으면 빌드가 실패합니다.
+## 제출 화면
 
-배포 후 Render의 `ALLOWED_ORIGINS`에 정확한 Vercel origin을, Firebase Authorized domains에 Vercel 호스트를 추가하세요.
+아래 화면은 모두 **합성 자료와 테스트 생성기**입니다. 실제 개인 지표를 공개하지 않습니다.
 
-현재 배포 설정(비밀값 제외):
+![일별 데이터 추가 결과](docs/screenshots/growth-data.png)
+![이전 대화를 불러온 화면](docs/screenshots/growth-history.png)
+![게시 실험과 게시물 연결](docs/screenshots/growth-posts.png)
+![모바일 성장 상담](docs/screenshots/growth-mobile.png)
 
-| 위치 | 설정 |
-| --- | --- |
-| Render | Root `backend`, Python 3.12.14, `LLM_PROVIDER=anthropic`, `ANTHROPIC_BASE_URL=https://copa.codyssey.kr`, `ANTHROPIC_MODEL=claude-sonnet-4`, `MAX_OUTPUT_TOKENS=8000`, `DAILY_REQUEST_LIMIT=30`, `ALLOWED_ORIGINS=https://m1-2-frontend-theta.vercel.app,http://localhost:3000` |
-| Vercel | Root `frontend`, Framework Other, Build `node build-config.mjs`, Output `public`, `API_BASE_URL=https://m1-2-6ae7.onrender.com`, `FIREBASE_WEB_CONFIG`(공개 웹 설정) |
-| Firebase | Authorized domains에 `m1-2-frontend-theta.vercel.app` 추가 |
+[설계](docs/superpowers/specs/2026-10-19-follower-growth-design.md) · [구현 계획](docs/superpowers/plans/2026-10-21-follower-growth.md) · [구조](docs/architecture.md)
 
-`FIREBASE_SERVICE_ACCOUNT_JSON`은 따옴표 없이 `{`부터 `}`까지 한 줄 JSON으로 넣어야 합니다. 값이 깨지면 모든 보호 API가 401(로그인 만료/유효하지 않음)로 응답합니다.
-프리뷰 도메인은 필요한 주소만 개별 허용합니다. 화면은 8초 이상 대기 시 콜드스타트 안내를 표시합니다.
-`/health`의 configured는 환경 변수 존재 여부이며 실제 서비스 연결 성공을 보증하지 않습니다.
-
-## 제출 스크린샷 (합성 테스트 데이터)
-
-아래 이미지는 새로 시작한 로컬 preview 서버의 메모리 저장소와 모의 모델로 촬영했습니다. 실제 Firestore 자료, 계정 지표, 실제 모델 응답은 포함하지 않으며 제품 동작 예시입니다.
-
-**1. 합성 계정 데이터 기반 채팅**
-
-![합성 데이터 요약을 반영한 채팅](docs/screenshots/chat.png)
-
-**2. 계정 데이터 기록 추가**
-
-![합성 테스트 기록 추가 후 목록](docs/screenshots/data.png)
-
-**3. 대화 기록 목록**
-
-![합성 테스트 대화 기록](docs/screenshots/history.png)
-
-**4. 대화 불러오기**
-
-![합성 테스트 대화 불러오기 결과](docs/screenshots/history-loaded.png)
-
-### 기타 화면 예시
-
-![콘텐츠 라이브러리: 붙여넣기와 성과 입력](docs/screenshots/library.png)
-![작업실: 성과 상위 콘텐츠](docs/screenshots/studio.png)
-![제작 선호: 클릭형 구성](docs/screenshots/preferences.png)
+과제에서 명시한 GPT API 조건을 엄격히 충족하려면 OpenAI 제공업체의 실제 호출도 별도로 확인해야 합니다. Anthropic 사용을 GPT API 사용으로 표기하지 않습니다.

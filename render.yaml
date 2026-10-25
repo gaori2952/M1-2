@@ -32,3 +32,9 @@ services:
         value: 4000
       - key: DAILY_REQUEST_LIMIT
         value: 30
+      - key: BUFFER_API_KEY
+        sync: false
+      - key: BUFFER_CHANNEL_ID
+        sync: false
+      - key: BUFFER_OWNER_UID
+        sync: false

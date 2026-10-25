@@ -43,9 +43,14 @@ await mkdir(new URL("public/", root), { recursive: true });
 for (const file of [
   "index.html",
   "styles.css",
+  "growth.css",
+  "growth.js",
   "app.js",
   "card-editor.js",
   "card-renderer.js",
+  "image-review.js",
+  "review-images.js",
+  "image-review.css",
   "api.js",
   "auth.js",
   "config.js",
@@ -58,9 +63,14 @@ await cp(new URL("vendor/", root), new URL("public/vendor/", root), {
 const hash = createHash("sha256");
 for (const file of [
   "styles.css",
+  "growth.css",
+  "growth.js",
   "app.js",
   "card-editor.js",
   "card-renderer.js",
+  "image-review.js",
+  "review-images.js",
+  "image-review.css",
   "api.js",
   "auth.js",
   "config.js",
@@ -71,18 +81,23 @@ const html = await readFile(new URL("index.html", root), "utf8");
 await writeFile(
   new URL("public/index.html", root),
   html.replace(
-    /(href|src)="(styles\.css|app\.js|config\.js)"/g,
+    /(href|src)="(styles\.css|growth\.css|image-review\.css|app\.js|config\.js)"/g,
     `$1="$2?v=${version}"`,
   ),
 );
 console.log("Built static frontend with public configuration only.");
 
-for (const file of ["app.js", "card-editor.js", "card-renderer.js"]) {
+for (const file of [
+  "app.js",
+  "card-editor.js",
+  "card-renderer.js",
+  "image-review.js",
+]) {
   const js = await readFile(new URL(file, root), "utf8");
   await writeFile(
     new URL(`public/${file}`, root),
     js.replace(
-      /from (["'])\.\/(api|auth|card-editor|card-renderer)\.js\1/g,
+      /from (["'])\.\/(api|auth|growth|card-editor|card-renderer|image-review|review-images)\.js\1/g,
       `from "./$2.js?v=${version}"`,
     ),
   );

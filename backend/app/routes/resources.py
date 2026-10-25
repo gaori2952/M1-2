@@ -1,10 +1,12 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .. import repository as repo
 from ..analytics import summarize
 from ..auth import require_owner
+from ..growth_models import CsvInput
+from ..importing import parse_daily_csv
 from ..models import (
     ContentInput,
     ConversationInput,
@@ -64,6 +66,50 @@ def add_data(body: MetricInput, uid=Depends(require_owner), db=Depends(store)):
         body.model_dump(mode="json"),
         repo.identity(uid, str(body.date) + "_" + body.metric),
     )
+
+
+@router.post("/data/import")
+def import_data(body: CsvInput, uid=Depends(require_owner), db=Depends(store)):
+    try:
+        if len(body.csv_text.encode()) > 2 * 1024 * 1024:
+            raise ValueError("CSV는 2MB 이하로 가져오세요.")
+        rows = parse_daily_csv(body.csv_text)
+        dates = sorted({r["date"] for r in rows})
+        if (
+            len(dates) > 366
+            or (date.fromisoformat(dates[-1]) - date.fromisoformat(dates[0])).days > 365
+        ):
+            raise ValueError("CSV 기간은 최대 366일입니다.")
+    except (ValueError, KeyError, TypeError) as e:
+        raise HTTPException(
+            422, str(e) if isinstance(e, ValueError) else "CSV 열과 값을 확인하세요."
+        ) from None
+    imported = skipped = 0
+    for row in rows:
+        key = repo.identity(uid, row["date"] + "_" + row["metric"])
+
+        def write(tx):
+            if tx.get("data", key):
+                return False
+            tx.set(
+                "data",
+                key,
+                row
+                | {"id": key, "owner_uid": uid, "created_at": repo.now(), "updated_at": repo.now()},
+            )
+            return True
+
+        if db.atomic(write):
+            imported += 1
+        else:
+            skipped += 1
+    return {
+        "imported": imported,
+        "skipped": skipped,
+        "date_count": len(dates),
+        "valid_count": sum(r["value"] is not None for r in rows),
+        "missing_count": sum(r["value"] is None for r in rows),
+    }
 
 
 @router.put("/data/{key}")
