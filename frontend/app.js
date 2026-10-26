@@ -177,7 +177,8 @@ function show(view) {
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   window.scrollTo({ top: 0, behavior: "instant" });
   if (view === "history") run(loadHistory);
-  if (view === "drafts" || view === "studio") run(loadDrafts);
+  if (["drafts", "studio", "library", "preferences"].includes(view))
+    run(() => Promise.all([loadDrafts(), loadContents(), loadPreferences()]));
 }
 function highlightNav(view) {
   document
@@ -342,6 +343,7 @@ async function loadSummary() {
     node.append(el("small", name), el("strong", value));
     $("#data-summary").append(node);
   }
+  return s;
 }
 function openContentForm(title) {
   $("#content-form-title").textContent = title;
@@ -698,7 +700,11 @@ async function loadData() {
     ? `M1-1에서 가져온 기록 · ${dates[0]} ~ ${dates.at(-1)}`
     : "";
   renderData();
-  await loadSummary();
+  const summary = await loadSummary();
+  growth.updateDaily(
+    state.data.filter((d) => d.metric === "follows"),
+    summary,
+  );
 }
 $("#more-data").onclick = () => {
   state.limit += 100;
@@ -1427,13 +1433,7 @@ async function session(user) {
     return;
   }
   try {
-    await Promise.all([
-      growthReady,
-      loadData(),
-      loadContents(),
-      loadPreferences(),
-      loadDrafts(),
-    ]);
+    await Promise.all([growthReady, loadData()]);
     const id = localStorage.getItem(storageKey());
     if (id) {
       try {

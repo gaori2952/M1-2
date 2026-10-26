@@ -616,8 +616,6 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     const results = await Promise.allSettled([
       request("/api/buffer/status"),
       request("/api/growth/summary"),
-      request("/api/data?metric=follows"),
-      request("/api/data/summary"),
       request("/api/buffer/posts?status=sent&limit=10"),
     ]);
     if (!same(refreshEpoch)) return;
@@ -630,19 +628,13 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       if (!same(refreshEpoch)) return;
     } else {
       $("#growth-sync-state").textContent = results[0].reason.message;
-      $("#growth-gpt-state").textContent =
-        "Buffer 서버 설정을 먼저 확인하세요.";
+      $("#growth-gpt-state").textContent = results[0].reason.message;
     }
-    if (results[4].status === "fulfilled")
-      renderLiveData(results[4].value.items);
+    if (results[2].status === "fulfilled")
+      renderLiveData(results[2].value.items);
     else
       $("#growth-live-data").replaceChildren(
         node("tr", "게시물 조회에 실패했어요. 다시 갱신해 주세요."),
-      );
-    if (results[2].status === "fulfilled")
-      renderDaily(
-        results[2].value,
-        results[3].status === "fulfilled" ? results[3].value : null,
       );
   }
   async function recoverSync() {
@@ -924,5 +916,13 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       }
     }
   }
-  return { sessionChanged, refresh, openConversation, isBusy: () => busy };
+  return {
+    sessionChanged,
+    refresh,
+    openConversation,
+    isBusy: () => busy,
+    updateDaily(records, summary) {
+      if (user && user === getUser()) renderDaily(records, summary);
+    },
+  };
 }

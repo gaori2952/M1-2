@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from google.api_core.exceptions import ResourceExhausted
 
 from .anthropic_generation import AnthropicGenerator
 from .buffer_client import BufferClient
@@ -54,8 +55,23 @@ def create_app(
         logging.getLogger(__name__).error("Request failed: %s", type(exc).__name__)
         return JSONResponse(
             status_code=503,
+            headers={"Access-Control-Allow-Origin": request.headers["origin"], "Vary": "Origin"}
+            if request.headers.get("origin") in settings.allowed_origins
+            else {},
             content={
                 "detail": "외부 서비스 또는 저장소 연결에 실패했습니다. 잠시 후 다시 시도하세요."
+            },
+        )
+
+    @app.exception_handler(ResourceExhausted)
+    async def database_quota(request: Request, exc: ResourceExhausted):
+        logging.getLogger(__name__).warning("Firestore quota exceeded: %s", request.url.path)
+        return JSONResponse(
+            status_code=503,
+            headers={"Retry-After": "60"},
+            content={
+                "code": "database_quota_exceeded",
+                "detail": "데이터베이스 조회 한도를 초과했어요. 한도가 초기화된 뒤 다시 이용해 주세요. 입력 내용은 유지됩니다.",
             },
         )
 
