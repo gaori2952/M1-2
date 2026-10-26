@@ -9,6 +9,38 @@ from . import repository as repo
 from .analytics import summarize
 from .content_search import select_contents
 from .generation import validate_reply
+from .growth_service import growth_context
+from .image_assets import decode_asset
+
+
+def request_status(db, uid, request_id):
+    rid = repo.identity(uid, str(request_id))
+
+    def reconcile(tx):
+        record = repo.owned(tx, "requests", rid, uid)
+        conv = (
+            tx.get("conversations", record["conversation_id"])
+            if record.get("conversation_id")
+            else None
+        )
+        if record["status"] == "pending" and record.get("expires_at", float("inf")) <= time.time():
+            record |= {"status": "failed", "error": "lease_expired"}
+            tx.set("requests", rid, record)
+            if conv and conv.get("active_request") == rid:
+                if conv.get("message_count", 0) == 0:
+                    tx.delete("conversations", conv["id"])
+                else:
+                    tx.set(
+                        "conversations",
+                        conv["id"],
+                        conv | {"active_request": None, "busy_until": 0},
+                    )
+        return {
+            "status": record["status"],
+            "response": record.get("response") if record["status"] == "done" else None,
+        }
+
+    return db.atomic(reconcile)
 
 
 def run_chat(db, generator, settings, uid, request):
@@ -31,14 +63,18 @@ def run_chat(db, generator, settings, uid, request):
     existing = db.get("requests", rid)
     if existing:
         return replay(existing)
-    all_sources = db.list("contents", uid)
+    for image in request.images:
+        decode_asset(image)
+    all_sources = db.list("contents", uid) if request.mode != "growth" else []
     selected = request.selected_content_ids
     if request.selected_idea:
         selected = list(dict.fromkeys(selected + request.selected_idea.source_ids))
         if len(selected) > 5:
             raise HTTPException(422, "참고 원고는 최대 5개입니다.")
     sources = select_contents(request.message, all_sources, selected)
-    profile = db.get("profiles", repo.identity(uid, "profile"))
+    profile = (
+        db.get("profiles", repo.identity(uid, "profile")) if request.mode != "growth" else None
+    )
     series = repo.owned(db, "series", request.series_id, uid) if request.series_id else None
     context = {
         "summary": summarize(db.list("data", uid), request.start, request.end),
@@ -49,6 +85,10 @@ def run_chat(db, generator, settings, uid, request):
         ],
     }
     context["summary"].pop("daily", None)
+    if request.mode == "growth":
+        growth = growth_context(db, settings, uid, request.growth_options, request.message)
+        sources = growth["evidence"]
+        context |= {"growth": growth, "sources": sources}
     cid = request.conversation_id or uuid4().hex
     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     qid = repo.identity(uid, day)
@@ -101,15 +141,42 @@ def run_chat(db, generator, settings, uid, request):
         history = sorted(
             db.list(f"conversations/{cid}/messages", uid), key=lambda m: m["sequence"]
         )[-8:]
+        source_ids = [s["id"] for s in sources]
+        if request.mode == "growth":
+            source_ids += [s["id"] for s in context["growth"]["content_history"]]
         result = validate_reply(
             generator.generate(
                 request,
                 context,
-                [{"role": m["role"], "content": m["content"]} for m in history],
+                [
+                    {
+                        "role": m["role"],
+                        "content": m["content"],
+                        **(
+                            {"work_text": m["result"]["work_text"]}
+                            if m.get("result", {}).get("work_text")
+                            else {}
+                        ),
+                        **({"image_metadata_only": m["images"]} if m.get("images") else {}),
+                    }
+                    for m in history
+                ],
             ),
             request,
-            [s["id"] for s in sources],
+            source_ids,
         )
+        if request.mode == "growth":
+            cited = set(result["source_ids"])
+            for idea in result["ideas"]:
+                cited.update(idea["source_ids"])
+            # Keep the full history in the model input, but persist only referenced history.
+            # The request response contains the result twice and must fit one Firestore document.
+            result["growth"] = context["growth"] | {
+                "request_id": str(request.request_id),
+                "content_history": [
+                    p for p in context["growth"]["content_history"] if p["id"] in cited
+                ],
+            }
         did = uuid4().hex if result["draft"] else None
 
         def finish(tx):
@@ -140,6 +207,9 @@ def run_chat(db, generator, settings, uid, request):
                 "owner_uid": uid,
                 "role": "user",
                 "content": request.message,
+                "images": [
+                    image.model_dump(exclude={"base64", "mime"}) for image in request.images
+                ],
                 "sequence": seq,
                 "created_at": repo.now(),
             }
@@ -183,6 +253,20 @@ def run_chat(db, generator, settings, uid, request):
                     },
                 )
             tx.set("requests", rid, reservation | {"status": "done", "response": response})
+            if request.mode == "growth":
+                key = repo.identity(uid, "growth_" + str(request.request_id))
+                tx.set(
+                    "growth_recommendations",
+                    key,
+                    {
+                        "id": key,
+                        "owner_uid": uid,
+                        "result": result["growth"],
+                        "fingerprint": hashlib.sha256(
+                            request.growth_options.model_dump_json().encode()
+                        ).hexdigest(),
+                    },
+                )
             return response
 
         return db.atomic(finish)

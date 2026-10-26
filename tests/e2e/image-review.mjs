@@ -37,6 +37,7 @@ export async function connectAuth(cb){window.testSession=cb;cb({uid:'alice',disp
 );
 try {
   await page.goto("http://127.0.0.1:18101");
+  await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("#review-upload").waitFor();
   await page.locator("#review-upload").setInputFiles({
     name: "spoof.png",
@@ -94,6 +95,7 @@ try {
   await page.getByText("이전 버전 1 · 읽기 전용", { exact: true }).waitFor();
   await page.getByRole("button", { name: "현재 버전으로 돌아가기" }).click();
   await page.reload();
+  await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("[data-review-card]").nth(5).waitFor();
   assert.equal(
     await page.locator("[data-finding-check]").first().isChecked(),
@@ -132,6 +134,7 @@ try {
       }),
   );
   await page.reload();
+  await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.getByText(/이 브라우저에 이미지가 없어요/).waitFor();
   await page
     .locator("#review-replace")
@@ -157,6 +160,9 @@ try {
     r.fulfill({ contentType: "text/javascript", body: authStub }),
   );
   await recoveryPage.goto("http://127.0.0.1:18101");
+  await recoveryPage
+    .getByRole("button", { name: "이미지 검토", exact: true })
+    .click();
   await recoveryPage.locator("#review-upload").setInputFiles(files.slice(0, 2));
   await recoveryPage.locator("[data-upload-card]").nth(1).waitFor();
   let modelPosts = 0;
@@ -189,6 +195,9 @@ try {
     },
   );
   await recoveryPage.reload();
+  await recoveryPage
+    .getByRole("button", { name: "이미지 검토", exact: true })
+    .click();
   await recoveryPage
     .getByText('<img src=x onerror="window.pwned=1">', { exact: true })
     .waitFor();
@@ -252,6 +261,9 @@ try {
     if (r.method() === "POST" && r.url().includes("/image-reviews")) posts++;
   });
   await storagePage.goto("http://127.0.0.1:18101");
+  await storagePage
+    .getByRole("button", { name: "이미지 검토", exact: true })
+    .click();
   await storagePage.locator("#review-upload").setInputFiles(files.slice(0, 1));
   await storagePage.getByText("합성 저장소 실패", { exact: true }).waitFor();
   assert.equal(posts, 0);

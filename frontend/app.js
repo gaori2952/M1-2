@@ -1,3 +1,4 @@
+import { mountGrowth } from "./growth.js";
 import { connectAuth } from "./auth.js";
 import { createApi } from "./api.js";
 import { mountCardEditor, resetCardEditor } from "./card-editor.js";
@@ -81,6 +82,13 @@ const imageReview = mountImageReview($("#image-review-root"), {
   getUser: () => state.user,
   notice,
 });
+const growth = mountGrowth($("#growth-root"), {
+  api,
+  getUser: () => state.user,
+  notice,
+  show,
+  loadData,
+});
 const el = (tag, text, cls) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -149,6 +157,8 @@ function saveActive() {
   else localStorage.removeItem(storageKey());
 }
 function show(view) {
+  if (growth.isBusy())
+    return notice("성장 상담과 저장이 끝난 뒤 이동해 주세요.");
   if (imageReview.isBusy())
     return notice("이미지 처리가 끝난 뒤 화면을 이동해 주세요.");
   if (state.editingLocks) return notice("처리가 끝난 뒤 화면을 이동해 주세요.");
@@ -165,8 +175,10 @@ function show(view) {
   document
     .querySelectorAll("nav button")
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  window.scrollTo({ top: 0, behavior: "instant" });
   if (view === "history") run(loadHistory);
-  if (view === "drafts" || view === "studio") run(loadDrafts);
+  if (["drafts", "studio", "library", "preferences"].includes(view))
+    run(() => Promise.all([loadDrafts(), loadContents(), loadPreferences()]));
 }
 function highlightNav(view) {
   document
@@ -299,7 +311,7 @@ async function loadSummary() {
     );
     poly.setAttribute("points", segment.join(" "));
     poly.setAttribute("fill", "none");
-    poly.setAttribute("stroke", "#2563eb");
+    poly.setAttribute("stroke", "currentColor");
     poly.setAttribute("stroke-width", "2.5");
     $("#trend-chart").append(poly);
     segment.length = 0;
@@ -319,7 +331,7 @@ async function loadSummary() {
   for (const [name, value] of [
     [`${labels[metric]} 평균`, number(v.average)],
     ["최고", number(v.max)],
-    ["유효 관측 / 결측", `${v.count || 0} / ${v.missing_count || 0}`],
+    ["선택 지표의 일별 기록", `${v.count || 0}일`],
     [
       "전기 대비 평균 변화",
       v.change_percent === null || v.change_percent === undefined
@@ -331,6 +343,7 @@ async function loadSummary() {
     node.append(el("small", name), el("strong", value));
     $("#data-summary").append(node);
   }
+  return s;
 }
 function openContentForm(title) {
   $("#content-form-title").textContent = title;
@@ -574,6 +587,8 @@ function openDataForm(title) {
   $("#data-form").hidden = false;
 }
 $("#data-new").onclick = () => {
+  $("#data-source-filter").value = "manual";
+  renderData();
   resetData();
   $("#data-date").value = new Date().toISOString().slice(0, 10);
   $("#data-metric").value = $("#filter-metric").value;
@@ -612,10 +627,20 @@ document.querySelectorAll("[data-range]").forEach((b) =>
     }, b),
   ),
 );
+function editableData(d) {
+  return (
+    d.editable ?? (d.source !== "imported" && d.memo !== "M1-1 CSV 가져오기")
+  );
+}
+$("#data-source-filter").onchange = renderData;
 function renderData() {
   $("#data-list").replaceChildren();
+  $("#data-actions-heading").hidden =
+    $("#data-source-filter").value !== "manual";
   const filtered = state.data.filter(
-    (d) => d.metric === $("#filter-metric").value,
+    (d) =>
+      d.metric === $("#filter-metric").value &&
+      editableData(d) === ($("#data-source-filter").value === "manual"),
   );
   $("#data-total").textContent = `${filtered.length}개 기록`;
   $("#more-data").hidden = filtered.length <= state.limit;
@@ -629,25 +654,26 @@ function renderData() {
     ])
       tr.append(el("td", value));
     const actions = el("td");
-    actions.append(
-      button("수정", () => {
-        $("#data-id").value = d.id;
-        $("#data-date").value = d.date;
-        $("#data-date").disabled = true;
-        $("#data-metric").value = d.metric;
-        $("#data-metric").disabled = true;
-        $("#data-value").value = d.value ?? "";
-        $("#data-memo").value = d.memo;
-        openDataForm(`기록 수정 · ${d.date}`);
-      }),
-      button("삭제", async () => {
-        if (!confirm("이 데이터 기록을 삭제할까요?")) return;
-        await api("/api/data/" + d.id, { method: "DELETE" });
-        await loadData();
-        notice("데이터를 삭제했어요.");
-      }),
-    );
-    tr.append(actions);
+    if (editableData(d))
+      actions.append(
+        button("수정", () => {
+          $("#data-id").value = d.id;
+          $("#data-date").value = d.date;
+          $("#data-date").disabled = true;
+          $("#data-metric").value = d.metric;
+          $("#data-metric").disabled = true;
+          $("#data-value").value = d.value ?? "";
+          $("#data-memo").value = d.memo;
+          openDataForm(`기록 수정 · ${d.date}`);
+        }),
+        button("삭제", async () => {
+          if (!confirm("이 데이터 기록을 삭제할까요?")) return;
+          await api("/api/data/" + d.id, { method: "DELETE" });
+          await loadData();
+          notice("데이터를 삭제했어요.");
+        }),
+      );
+    if (editableData(d)) tr.append(actions);
     $("#data-list").append(tr);
   }
   if (!filtered.length) {
@@ -665,8 +691,20 @@ async function loadData() {
       (a, d) => (d.date > a ? d.date : a),
       "",
     );
+  const archived = state.data.filter((d) => !editableData(d));
+  const dates = archived.map((d) => d.date).sort();
+  $("#data-archive-label").textContent = dates.length
+    ? `보관된 일별 기록 · ${dates.at(-1)}까지`
+    : "보관된 일별 기록 / 직접 기록";
+  $("#data-archive-period").textContent = dates.length
+    ? `M1-1에서 가져온 기록 · ${dates[0]} ~ ${dates.at(-1)}`
+    : "";
   renderData();
-  await loadSummary();
+  const summary = await loadSummary();
+  growth.updateDaily(
+    state.data.filter((d) => d.metric === "follows"),
+    summary,
+  );
 }
 $("#more-data").onclick = () => {
   state.limit += 100;
@@ -691,6 +729,7 @@ bindForm("#data-form", async () => {
   resetData();
   $("#data-form").hidden = true;
   await loadData();
+  await growth.refresh();
   notice("데이터를 저장하고 요약을 갱신했어요.");
 });
 $("#data-reset").onclick = resetData;
@@ -720,7 +759,6 @@ function download(name, data, type = "application/json") {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-$("#export-data").onclick = () => download("account-data.json", state.data);
 const prefGroups = {
   독자: ["중학생", "고등학생", "공학 입문 대학생", "일반 성인", "전공자"],
   "설명 순서": [
@@ -966,6 +1004,7 @@ async function loadConversation(id) {
   $(".planning-tools").open = true;
   if (state.busy) throw new Error("현재 답변이 끝난 뒤 불러와 주세요.");
   const data = await api("/api/conversations/" + id);
+  if (growth.openConversation(data)) return;
   state.conversationId = id;
   state.pending = null;
   saveActive();
@@ -1332,7 +1371,7 @@ $("#login").onclick = () =>
   });
 $("#logout").onclick = () =>
   run(async () => {
-    if (state.busy || state.editingLocks)
+    if (state.busy || state.editingLocks || growth.isBusy())
       throw new Error("저장과 답변 생성이 끝난 뒤 로그아웃해 주세요.");
     if (state.dirty && !confirm("저장하지 않은 원고가 있어요. 로그아웃할까요?"))
       return;
@@ -1340,14 +1379,22 @@ $("#logout").onclick = () =>
   });
 async function session(user) {
   state.user = user;
+  const growthReady = growth.sessionChanged();
   imageReview.sessionChanged();
   $("#login").hidden = !!user;
   $("#logout").hidden = !user;
   $("#user-name").textContent = user?.displayName || "개인 작업실";
   $("#setup").hidden = !!user;
   if (!user) {
+    await growthReady;
     state.contents = [];
     state.data = [];
+    state.latestDate = null;
+    $("#data-archive-label").textContent = "보관된 일별 기록";
+    $("#data-archive-period").textContent = "";
+    $("#data-archive").open = false;
+    $("#data-source-filter").value = "imported";
+    $("#data-form").hidden = true;
     state.series = [];
     state.conversationId = null;
     state.draft = null;
@@ -1383,15 +1430,11 @@ async function session(user) {
     $("#style-preview").textContent = "확인한 제작 선호가 아직 없어요.";
     renderSources();
     show("review");
+    show("growth");
     return;
   }
   try {
-    await Promise.all([
-      loadData(),
-      loadContents(),
-      loadPreferences(),
-      loadDrafts(),
-    ]);
+    await Promise.all([growthReady, loadData()]);
     const id = localStorage.getItem(storageKey());
     if (id) {
       try {

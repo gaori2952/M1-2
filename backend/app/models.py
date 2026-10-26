@@ -4,6 +4,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .growth_models import GrowthOptions
+from .image_review_models import ReviewImage
+
 Metric = Literal["views", "viewers", "interactions", "visits", "follows", "link_clicks"]
 METRICS = ("views", "viewers", "interactions", "visits", "follows", "link_clicks")
 Short = Annotated[str, Field(min_length=1, max_length=200)]
@@ -126,12 +129,14 @@ class GeneratedReply(Input):
     source_ids: list[DocId] = Field(max_length=5)
     ideas: list[Idea] = Field(max_length=3)
     draft: Draft | None
+    work_text: str = Field(default="", max_length=12000)
 
 
 class ChatInput(Input):
     request_id: UUID
     conversation_id: DocId | None = None
-    mode: Literal["chat", "ideas", "draft"] = "chat"
+    mode: Literal["chat", "ideas", "draft", "growth"] = "chat"
+    growth_options: GrowthOptions | None = None
     message: Text
     selected_content_ids: list[DocId] = Field(default_factory=list, max_length=5)
     series_id: DocId | None = None
@@ -139,9 +144,16 @@ class ChatInput(Input):
     end: Date | None = None
     selected_idea: Idea | None = None
     card_count: int = Field(default=6, ge=4, le=10)
+    images: list[ReviewImage] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def validate_request(self):
+        if self.images and self.mode != "growth":
+            raise ValueError("사진 첨부는 인스타 대화에서 사용할 수 있습니다.")
+        if len({i.card_id for i in self.images}) != len(self.images):
+            raise ValueError("첨부 이미지 ID가 중복되었습니다.")
+        if self.mode == "growth" and self.growth_options is None:
+            raise ValueError("성장 상담의 게시 조건이 필요합니다.")
         if bool(self.start) != bool(self.end):
             raise ValueError("시작일과 종료일을 함께 지정하세요.")
         if self.start and (self.end < self.start or (self.end - self.start).days > 365):

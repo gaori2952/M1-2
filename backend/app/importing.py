@@ -7,6 +7,12 @@ from .models import METRICS, MetricInput
 from .repository import create, identity
 
 
+def imported_record(record):
+    return record.get("source") == "imported" or (
+        not record.get("source") and record.get("memo") == "M1-1 CSV 가져오기"
+    )
+
+
 def parse_daily_csv(text):
     reader = csv.DictReader(io.StringIO(text.lstrip("\ufeff")))
     if reader.fieldnames != ["date", *METRICS]:
@@ -40,7 +46,7 @@ def import_records(store, uid, rows):
             store,
             "data",
             uid,
-            r,
+            r | {"source": "imported"},
             identity(uid, r["date"] + "_" + r["metric"]),
             skip=True,
         )

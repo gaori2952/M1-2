@@ -26,6 +26,8 @@ async function fixture(fn) {
       "image-review.js",
       "review-images.js",
       "image-review.css",
+      "growth.js",
+      "growth.css",
     ])
       await writeFile(join(dir, f), "test asset");
     await cp("frontend/vendor", join(dir, "vendor"), { recursive: true });
@@ -65,6 +67,8 @@ test("build exports public config and excludes backend secrets", () =>
       "image-review.js",
       "review-images.js",
       "image-review.css",
+      "growth.js",
+      "growth.css",
     ])
       assert.equal(
         await readFile(join(dir, "public", name), "utf8"),

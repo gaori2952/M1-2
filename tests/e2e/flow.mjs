@@ -23,6 +23,7 @@ await page.route("**/auth.js*", (route) =>
 );
 try {
   await page.goto("http://127.0.0.1:18101");
+  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "작업실", exact: true }).click();
   await page.getByText("콘텐츠 작업실", { exact: true }).waitFor();
   await page.getByRole("button", { name: "계정 데이터", exact: true }).click();
@@ -74,6 +75,7 @@ try {
   await page.getByText("전자기학 후속 주제 추천", { exact: true }).waitFor();
   await page.screenshot({ path: "test-results/history.png", fullPage: true });
   await page.reload();
+  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.locator("#open-draft").waitFor({ state: "visible" });
   await page.locator("#open-draft").click();
   assert.match(
