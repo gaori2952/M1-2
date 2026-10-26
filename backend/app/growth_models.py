@@ -20,6 +20,10 @@ class SyncInput(GrowthInput):
     request_id: UUID
 
 
+class BufferSyncInput(SyncInput):
+    force: bool = False
+
+
 class PreviewInput(SyncInput):
     options: GrowthOptions
 

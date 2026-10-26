@@ -15,10 +15,10 @@ from ..buffer_service import (
 )
 from ..growth_models import (
     AnnotationInput,
+    BufferSyncInput,
     ExperimentInput,
     ExperimentUpdate,
     PreviewInput,
-    SyncInput,
 )
 from ..growth_service import (
     annotated_posts,
@@ -39,9 +39,14 @@ def status(request: Request, uid=Depends(require_owner), db=Depends(store)):
 
 
 @router.post("/buffer/sync")
-def sync(body: SyncInput, request: Request, uid=Depends(require_owner), db=Depends(store)):
+def sync(body: BufferSyncInput, request: Request, uid=Depends(require_owner), db=Depends(store)):
     return sync_buffer(
-        db, request.app.state.buffer_client, request.app.state.settings, uid, body.request_id
+        db,
+        request.app.state.buffer_client,
+        request.app.state.settings,
+        uid,
+        body.request_id,
+        force=body.force,
     )
 
 

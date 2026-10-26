@@ -30,7 +30,10 @@ def current_posts(db, settings, uid):
 def buffer_status(db, settings, uid):
     c = connection(db, settings, uid)
     posts = current_posts(db, settings, uid)
-    dates = [p["sent_at"] for p in posts if p.get("sent_at")]
+    sent = [p for p in posts if p.get("status") == "sent"]
+    dates = [p["sent_at"] for p in sent if p.get("sent_at")]
+    metric_dates = [p["metrics_updated_at"] for p in sent if p.get("metrics_updated_at")]
+    chronological = datetime.fromisoformat
     return {
         "configured": bool(settings.buffer_api_key),
         "channel": c.get("channel"),
@@ -41,7 +44,15 @@ def buffer_status(db, settings, uid):
         "count": len(posts),
         "formats": dict(Counter(p["format"] for p in posts)),
         "follows_count": sum(p["metrics"].get("follows") is not None for p in posts),
-        "period": {"start": min(dates), "end": max(dates)} if dates else None,
+        "period": {
+            "start": min(dates, key=chronological),
+            "end": max(dates, key=chronological),
+        }
+        if dates
+        else None,
+        "latest_metrics_at": max(metric_dates, key=chronological) if metric_dates else None,
+        "oldest_metrics_at": min(metric_dates, key=chronological) if metric_dates else None,
+        "metrics_missing_count": len(sent) - len(metric_dates),
         "gpt_configured": bool(settings.openai_api_key),
         "chat_configured": settings.generator_configured,
         "assistant_provider": settings.llm_provider,
@@ -51,7 +62,7 @@ def buffer_status(db, settings, uid):
     }
 
 
-def sync_buffer(db, client, settings, uid, request_id, *, now=None):
+def sync_buffer(db, client, settings, uid, request_id, *, now=None, force=False):
     connection(db, settings, uid)
     stamp = time.time() if now is None else now
     rid = repo.identity(uid, "buffer_" + str(request_id))
@@ -70,7 +81,8 @@ def sync_buffer(db, client, settings, uid, request_id, *, now=None):
                 409, "동기화 상태를 확인하세요. 실패한 요청은 새로 불러오기로 다시 시작하세요."
             )
         if (
-            current.get("channel", {}).get("id") == settings.buffer_channel_id
+            not force
+            and current.get("channel", {}).get("id") == settings.buffer_channel_id
             and current.get("last_success_epoch") is not None
             and stamp - current["last_success_epoch"] < 3600
         ):

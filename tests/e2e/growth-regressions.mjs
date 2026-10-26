@@ -102,6 +102,67 @@ async function check(name, fn) {
   }
 }
 try {
+  await check(
+    "manual refresh fetches source and separates archive freshness",
+    async () => {
+      let syncBody;
+      const page = await fixture(async (r, p) => {
+        if (p === "/api/buffer/status") {
+          await r.fulfill({
+            json: {
+              ...status,
+              last_success_at: "2026-10-26T01:59:00Z",
+              period: {
+                start: "2026-10-01T10:00:00Z",
+                end: "2026-10-25T10:00:00Z",
+              },
+              latest_metrics_at: "2026-10-26T00:00:00Z",
+              oldest_metrics_at: "2026-10-25T00:00:00Z",
+              metrics_missing_count: 2,
+            },
+          });
+          return true;
+        }
+        if (p === "/api/data") {
+          await r.fulfill({
+            json: [{ date: "2026-10-13", metric: "follows", value: 10 }],
+          });
+          return true;
+        }
+        if (p === "/api/buffer/sync") {
+          syncBody = r.request().postDataJSON();
+          await r.fulfill({ json: { status: "done", count: 0 } });
+          return true;
+        }
+      });
+      await page.goto("http://127.0.0.1:18101");
+      await page.getByText("PRIVATE-ACCOUNT", { exact: true }).waitFor();
+      await page.locator("#growth-sync").click();
+      await page
+        .getByText("Buffer에서 최신 자료를 다시 가져왔어요.", { exact: true })
+        .waitFor();
+      assert.equal(syncBody.force, true);
+      assert.match(
+        await page.locator("#growth-source-state").innerText(),
+        /10월 25일/,
+      );
+      assert.match(
+        await page.locator("#growth-metric-state").innerText(),
+        /10월 26일/,
+      );
+      assert.match(
+        await page.locator("#growth-daily-label").innerText(),
+        /과거.*2026-10-13/,
+      );
+      assert.equal(await page.locator("#growth-chart").isVisible(), false);
+      const [input, select] = await Promise.all([
+        page.locator("#growth-topic").boundingBox(),
+        page.locator("#growth-format").boundingBox(),
+      ]);
+      assert.ok(Math.abs(input.y - select.y) <= 1);
+      await page.close();
+    },
+  );
   await check("ambiguous sync 503 preserves recovery UUID", async () => {
     const page = await fixture(async (r, p) => {
       if (p === "/api/buffer/sync") {
