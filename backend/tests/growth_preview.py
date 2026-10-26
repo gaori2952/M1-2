@@ -9,7 +9,32 @@ from app.repository import create, identity
 from .preview import PreviewGenerator, store
 from .test_buffer import raw_post
 from .test_chat import idea, reply
+from .test_image_review_transport import asset
 from .test_image_reviews import Reviewer
+
+
+class SyntheticPostReader:
+    def read(self, images, context):
+        return {
+            "title": "전기장과 전위의 차이",
+            "summary": "합성 이미지: 등전위면을 따라 움직일 때 전기장이 있어도 전위차는 0이다.",
+            "topics": ["전기장", "전위", "등전위면"],
+            "pages": [
+                {
+                    "card_id": cid,
+                    "text": "등전위면에서 전위차는 0",
+                    "description": "합성 카드",
+                    "legible": True,
+                }
+                for cid in context["card_order"]
+            ],
+        }
+
+
+def synthetic_post_images(post):
+    from app.post_media import image_sources
+
+    return [asset(cid=f"page-{i}") for i, _ in image_sources(post)[:10]]
 
 
 class SyntheticBuffer:
@@ -47,6 +72,14 @@ class SyntheticGrowth(PreviewGenerator):
             return super().generate(request, context, history)
         g = context["growth"]
         stats = g["summary"]["formats"][g["format"]]
+        if any(
+            word in request.message for word in ("초안", "재활용", "시리즈", "GPT", "퀴즈", "비교")
+        ):
+            return reply() | {
+                "answer": "합성 테스트: 기존 게시물의 전기장·전위 설명과 비교해 새 적용 문제로 구성했어요.",
+                "source_ids": [s["id"] for s in context["sources"]],
+                "work_text": "후속 카드뉴스 초안\n1. 전기장은 있는데 전위차는 왜 0일까?\n2. 등전위면을 따라 움직이는 상황\n3. 이동 방향과 일의 관계\n4. 정답 확인 퀴즈",
+            }
         if "콘텐츠" in request.message:
             source_ids = [context["sources"][0]["id"], g["content_history"][-1]["id"]]
             return reply() | {
@@ -108,4 +141,6 @@ app = create_app(
     growth_generator=SyntheticGrowth(),
     buffer_client=SyntheticBuffer(),
     image_reviewer=Reviewer(),
+    post_reader=SyntheticPostReader(),
+    post_downloader=synthetic_post_images,
 )
