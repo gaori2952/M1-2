@@ -112,7 +112,9 @@ try {
   await page
     .getByRole("button", { name: "Buffer 자료 갱신", exact: true })
     .click();
-  await page.getByText("Buffer 자료를 확인했어요.", { exact: true }).waitFor();
+  await page
+    .getByText("Buffer에서 최신 자료를 다시 가져왔어요.", { exact: true })
+    .waitFor();
   await page.getByRole("button", { name: "＋ 기록 추가", exact: true }).click();
   await page.locator("#data-date").fill("2026-10-22");
   await page.locator("#data-value").fill("42");

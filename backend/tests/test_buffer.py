@@ -184,3 +184,25 @@ def test_sync_uses_production_store_interface():
     result = sync_buffer(ProductionContract(), FakeBuffer(), settings(), "alice", str(uuid4()))
     assert result["status"] == "done"
     assert len(current_posts(ProductionContract(), settings(), "alice")) == 1
+
+
+def test_manual_refresh_bypasses_cache_but_replay_does_not_fetch_twice():
+    db, client, cfg = MemoryStore(), FakeBuffer(), settings()
+    sync_buffer(db, client, cfg, "alice", str(uuid4()), now=100000)
+    rid = str(uuid4())
+    result = sync_buffer(db, client, cfg, "alice", rid, now=100001, force=True)
+    assert client.calls == 2
+    assert not result.get("cached")
+    assert sync_buffer(db, client, cfg, "alice", rid, now=100002, force=True) == result
+    assert client.calls == 2
+
+
+def test_status_separates_fetch_time_post_date_and_metric_freshness():
+    db, client, cfg = MemoryStore(), FakeBuffer(), settings()
+    sync_buffer(db, client, cfg, "alice", str(uuid4()), now=100000)
+    status = buffer_status(db, cfg, "alice")
+    assert status["latest_metrics_at"] == "2026-10-08T11:00:00+00:00"
+    assert status["oldest_metrics_at"] == status["latest_metrics_at"]
+    assert status["metrics_missing_count"] == 0
+    assert status["period"]["end"] == "2026-10-01T11:00:00+00:00"
+    assert status["last_success_at"] != status["latest_metrics_at"]

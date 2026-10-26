@@ -41,13 +41,13 @@ const link = (label, url) => {
 export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
   const past = document.querySelector("#growth-posts-root");
   root.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">YOUR NEXT POST</span><h1>다음 게시, 팔로워로 이어지게.</h1><p>무슨 콘텐츠를 왜 올릴지, 내 게시물과 연결해 제안해요.</p></div><button id="growth-sync" class="primary">Buffer 새로 불러오기</button></header>
- <div class="growth-connection"><strong id="growth-account">내 계정 연결</strong><span id="growth-sync-state">로그인 후 Buffer 자료를 불러올 수 있어요.</span><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div>
+ <div class="growth-connection"><strong id="growth-account">내 계정 연결</strong><dl class="growth-freshness"><div><dt>마지막으로 가져온 시각</dt><dd id="growth-sync-state">로그인 후 확인할 수 있어요.</dd></div><div><dt>최신 게시일</dt><dd id="growth-source-state">—</dd></div><div><dt>성과가 갱신된 시각</dt><dd id="growth-metric-state">—</dd></div></dl><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div><p id="growth-freshness-note" class="growth-source-note">새로 불러오기는 Buffer 원본을 다시 조회해요. 게시물 성과는 원본 서비스보다 늦게 반영될 수 있어요.</p>
  <section class="growth-metrics" id="growth-metrics"><article><span>수집 게시물</span><strong>—</strong></article><article><span>팔로우 지표 제공 게시물</span><strong>—</strong></article><article><span>카드뉴스 팔로우 전환 중앙값</span><strong>—</strong></article></section>
  <section class="card growth-chat"><div class="section-top"><div><span class="eyebrow">01 · CONTENT</span><h2>다음에 어떤 콘텐츠를 올릴까요?</h2><p id="growth-gpt-state" class="muted">데이터 요약과 관련 게시물을 바탕으로 답해요.</p></div><button id="growth-new-chat" class="secondary">새 성장 대화</button></div><div class="growth-content-options"><label>만들고 싶은 형식<select id="growth-format"><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label><label>관심 주제 (선택)<input id="growth-topic" maxlength="300" placeholder="비워두면 기존 게시물에서 제안해요" /></label></div><p class="muted">주제를 정하지 않아도 물어보세요. 추천 제목·구성·내 게시물에서 찾은 이유를 함께 보여줘요.</p><div id="growth-messages" aria-live="polite"></div><p id="growth-loading" role="status" hidden>내 자료를 확인하며 답변을 준비하고 있어요…</p><form id="growth-chat-form"><label>질문<textarea id="growth-question" maxlength="4000" rows="2" placeholder="내 최근 게시물을 보고, 다음 콘텐츠 3개와 각각의 추천 이유를 알려줘." required></textarea></label><div class="growth-chat-actions"><button id="growth-chat-send" class="primary">AI에게 물어보기</button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-history-open" type="button" class="text-button">대화 기록</button></div></form></section>
  <details id="growth-timing" class="growth-timing"><summary>게시 시간 비교 (선택)</summary><p class="muted">콘텐츠를 정한 뒤, 내가 올릴 수 있는 시간끼리 비교해요. 콘텐츠 주제 추천과는 별도예요.</p><div class="growth-workspace"><section class="card growth-planner"><span class="eyebrow">시간 비교</span><h2>언제 올릴지 비교하기</h2><label>비교 기준<select id="growth-observation"><option value="lifetime">현재 누적 성과 · 탐색용</option><option value="seven_day">실제 7일차 부근 관측</option></select></label><label>내가 올릴 수 있는 시간<input id="growth-slot" type="datetime-local" /></label><small id="growth-timezone">계정 시간대: Asia/Seoul · 입력은 내 기기 시간 기준</small><button id="growth-add-slot" class="secondary">가능한 시간 추가</button><div id="growth-slots" class="growth-slots"></div><details><summary>Buffer에 설정된 일정 확인</summary><div id="growth-schedule" class="growth-slots"></div><small>눌러 추가한 시간만 추천 후보에 포함해요.</small></details><button id="growth-preview" class="primary">시간 후보 확인</button><p class="muted">통계와 후보 확인에는 AI를 호출하지 않아요.</p></section>
  <section class="card growth-advice"><span class="eyebrow">후보와 이유</span><h2>왜 이 시간인가요?</h2><div id="growth-recommendation"><p class="growth-empty">가능한 시간을 고르면 내 기록과 비교한 후보가 여기에 표시돼요.</p></div><div id="growth-evidence"></div><details class="growth-limitations"><summary>이 추천이 알 수 있는 범위</summary><p>팔로우 지표가 없는 게시물은 성장 효과를 판단하지 않아요. 누적 성과는 게시 후 경과 시간이 달라요. 시간별 차이가 원인을 증명하거나 팔로워 증가를 보장하지는 않아요.</p></details></section></div>
 </details>
-  <section class="card growth-daily"><div class="section-top"><div><h2>계정의 팔로우 흐름</h2><p id="growth-daily-summary" class="muted">저장된 일별 데이터의 기간·개수·추세를 표시해요.</p></div><button id="growth-data-open" class="text-button">데이터 관리 →</button></div><div id="growth-chart"></div><small>이 그래프는 기존에 보관한 계정 일별 자료예요. Buffer에서 자동 조회하는 게시물별 성과와는 별개예요.</small></section>
+  <details class="card growth-daily"><summary id="growth-daily-label">과거 계정 일별 기록</summary><div class="section-top"><div><h2>보관된 일별 팔로우</h2><p id="growth-daily-summary" class="muted">저장된 일별 데이터의 기간·개수·추세를 표시해요.</p></div><button id="growth-data-open" class="text-button">데이터 관리 →</button></div><div id="growth-chart"></div><p id="growth-daily-freshness" class="growth-source-note"></p><small>이 자료는 과거에 보관한 계정 일별 기록이에요. Buffer API가 계정 일별 팔로워 통계를 제공하지 않아 새로 불러오기로 갱신되지 않아요. 비어 있는 날짜를 0이나 추정값으로 채우지 않아요.</small></details>
 `;
   past.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">LEARN FROM YOUR POSTS</span><h1>지난 게시에서 다음 힌트를.</h1><p>팔로우 성과와 자료가 없는 부분을 함께 확인하세요.</p></div></header><section class="card"><span class="eyebrow">MY EXPERIMENTS</span><h2>내 게시 실험</h2><div id="growth-experiments"></div></section><section class="card"><div class="section-top"><h2>불러온 게시물</h2><label>형식 필터<select id="growth-post-filter"><option value="">전체 형식</option><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label></div><p id="growth-post-count" class="muted"></p><div id="growth-post-list" class="growth-post-grid"></div><button id="growth-more-posts" class="secondary" hidden>게시물 더 보기</button></section>`;
   const $ = (s) => document.querySelector(s);
@@ -194,8 +194,23 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     $("#growth-account").textContent =
       s?.channel?.name || "Buffer 계정을 연결해 주세요";
     $("#growth-sync-state").textContent = s?.last_success_at
-      ? `최근 성공 ${time(s.last_success_at)}${s.last_error ? ` · 최근 시도 실패 (${s.last_error}) · 이전 자료 표시 중` : ""}`
+      ? `가져옴 ${time(s.last_success_at)}${s.last_error ? ` · 최근 시도 실패 (${s.last_error}) · 이전 자료 표시 중` : ""}`
       : "첫 동기화를 시작해 주세요. 키·소유 UID·채널은 서버 환경 변수로 설정해요.";
+    $("#growth-source-state").textContent = time(s?.period?.end);
+    $("#growth-metric-state").textContent = s?.latest_metrics_at
+      ? `${time(s.latest_metrics_at)} (가장 최근)`
+      : "Buffer에서 갱신 시각을 제공하지 않았어요";
+    $("#growth-freshness-note").textContent = [
+      "새로 불러오기는 Buffer 원본을 다시 조회해요. 성과 수치는 Buffer에서 하루 단위로 수집해 최대 약 24시간 늦을 수 있어요.",
+      s?.oldest_metrics_at
+        ? `게시물별 성과 갱신 범위: ${time(s.oldest_metrics_at)} ~ ${time(s.latest_metrics_at)}.`
+        : "",
+      s?.metrics_missing_count
+        ? `성과 갱신 시각 미제공 ${num(s.metrics_missing_count)}개.`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     $("#growth-gpt-state").textContent = s?.chat_configured
       ? `${s.assistant_provider === "anthropic" ? "Claude" : "GPT"}가 데이터 요약과 관련 게시물을 바탕으로 답해요.`
       : "설정한 AI의 API 키를 확인해 주세요. 통계·시간 후보·실험 저장은 먼저 사용할 수 있어요.";
@@ -277,8 +292,14 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       .filter((r) => r.value !== null)
       .sort((a, b) => a.date.localeCompare(b.date));
     const m = summary?.metrics?.follows;
+    $("#growth-daily-label").textContent = values.length
+      ? `과거 계정 일별 기록 · ${values.at(-1).date}까지`
+      : "과거 계정 일별 기록 · 보관된 자료 없음";
+    $("#growth-daily-freshness").textContent = values.length
+      ? `마지막 유효 기록은 ${values.at(-1).date}예요. 위 Buffer 게시물 자료의 최신 날짜와는 달라요.`
+      : "보관한 기록이 생기면 이곳에서 확인할 수 있어요.";
     $("#growth-daily-summary").textContent = values.length
-      ? `${values[0].date} ~ ${values.at(-1).date} · ${values.length}개 유효 관측 · 최근 평균 ${num(m?.average)} · ${{ up: "증가", down: "감소", stable: "유지", insufficient_data: "이전 기간 비교 자료 부족" }[m?.trend] || "비교 자료 부족"}`
+      ? `${values[0].date} ~ ${values.at(-1).date} · ${values.length}개 유효 관측 · 마지막 요약 기간 평균 ${num(m?.average)} · ${{ up: "증가", down: "감소", stable: "유지", insufficient_data: "이전 기간 비교 자료 부족" }[m?.trend] || "비교 자료 부족"}`
       : "별도로 보관한 계정 일별 기록이 없어요. Buffer 게시물별 성과는 새로 불러오기로 확인할 수 있어요.";
     const chart = $("#growth-chart");
     chart.replaceChildren();
@@ -603,7 +624,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       if (e.status === 404) {
         await request("/api/buffer/sync", {
           method: "POST",
-          body: { request_id: syncPending },
+          body: { request_id: syncPending, force: true },
         });
         syncPending = null;
         persist();
@@ -708,15 +729,18 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       }
       syncPending = crypto.randomUUID();
       persist();
+      $("#growth-sync").textContent = "Buffer에서 가져오는 중…";
+      $("#growth-data-sync").textContent = "Buffer에서 가져오는 중…";
+      notice("Buffer에서 최신 게시물과 성과를 가져오고 있어요…");
       try {
         await request("/api/buffer/sync", {
           method: "POST",
-          body: { request_id: syncPending },
+          body: { request_id: syncPending, force: true },
         });
         syncPending = null;
         persist();
         await refresh();
-        notice("Buffer 자료를 확인했어요.");
+        notice("Buffer에서 최신 자료를 다시 가져왔어요.");
       } catch (e) {
         if ([401, 403, 422, 429].includes(e.status)) {
           syncPending = null;
@@ -724,6 +748,9 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
           await refresh();
         }
         throw e;
+      } finally {
+        $("#growth-sync").textContent = "Buffer 새로 불러오기";
+        $("#growth-data-sync").textContent = "Buffer 자료 갱신";
       }
     });
   $("#growth-data-sync").onclick = $("#growth-sync").onclick;
@@ -811,6 +838,14 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       "로그인 후 저장된 일별 팔로우가 표시돼요.";
     $("#growth-sync-state").textContent =
       "로그인 후 Buffer 자료를 불러올 수 있어요.";
+    $("#growth-source-state").textContent = "—";
+    $("#growth-metric-state").textContent = "—";
+    $("#growth-freshness-note").textContent =
+      "로그인 후 데이터의 출처와 갱신 시각을 확인할 수 있어요.";
+    $("#growth-daily-label").textContent = "과거 계정 일별 기록";
+    $("#growth-daily-freshness").textContent = "";
+    $("#growth-sync").textContent = "Buffer 새로 불러오기";
+    $("#growth-data-sync").textContent = "Buffer 자료 갱신";
     $("#growth-metrics").replaceChildren();
     $("#growth-loading").hidden = true;
     $("#growth-sync-recover").hidden = true;

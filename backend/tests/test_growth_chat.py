@@ -43,6 +43,18 @@ def options():
     }
 
 
+def test_manual_refresh_route_forwards_force_and_keeps_request_idempotent(env):
+    client, _, _ = env
+    source = client.app.state.buffer_client
+    assert source.calls == 1
+    rid = str(uuid4())
+    for _ in range(2):
+        response = client.post("/api/buffer/sync", json={"request_id": rid, "force": True})
+        assert response.status_code == 200
+        assert not response.json().get("cached")
+    assert source.calls == 2
+
+
 def test_growth_chat_grounded_saved_and_replay(env):
     c, db, g = env
     rid = str(uuid4())
