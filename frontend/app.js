@@ -1,6 +1,8 @@
+import { mountGrowth } from "./growth.js";
 import { connectAuth } from "./auth.js";
 import { createApi } from "./api.js";
 import { mountCardEditor, resetCardEditor } from "./card-editor.js";
+import { mountImageReview } from "./image-review.js";
 
 const $ = (selector) => document.querySelector(selector);
 const labels = {
@@ -75,6 +77,18 @@ const api = createApi(
   () => state.user,
   (text) => notice(text),
 );
+const imageReview = mountImageReview($("#image-review-root"), {
+  api,
+  getUser: () => state.user,
+  notice,
+});
+const growth = mountGrowth($("#growth-root"), {
+  api,
+  getUser: () => state.user,
+  notice,
+  show,
+  loadData,
+});
 const el = (tag, text, cls) => {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -143,6 +157,10 @@ function saveActive() {
   else localStorage.removeItem(storageKey());
 }
 function show(view) {
+  if (growth.isBusy())
+    return notice("성장 상담과 저장이 끝난 뒤 이동해 주세요.");
+  if (imageReview.isBusy())
+    return notice("이미지 처리가 끝난 뒤 화면을 이동해 주세요.");
   if (state.editingLocks) return notice("처리가 끝난 뒤 화면을 이동해 주세요.");
   if (
     state.dirty &&
@@ -180,7 +198,7 @@ document.documentElement.classList.toggle(
   localStorage.getItem("content-studio:theme") === "dark",
 );
 window.addEventListener("beforeunload", (e) => {
-  if (state.dirty) {
+  if (state.dirty || imageReview.isBusy()) {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -311,7 +329,10 @@ async function loadSummary() {
   for (const [name, value] of [
     [`${labels[metric]} 평균`, number(v.average)],
     ["최고", number(v.max)],
-    ["유효 관측 / 결측", `${v.count || 0} / ${v.missing_count || 0}`],
+    [
+      "선택 지표의 일별 기록",
+      `기록 ${v.count || 0}일 · 없음 ${v.missing_count || 0}일`,
+    ],
     [
       "전기 대비 평균 변화",
       v.change_percent === null || v.change_percent === undefined
@@ -683,6 +704,7 @@ bindForm("#data-form", async () => {
   resetData();
   $("#data-form").hidden = true;
   await loadData();
+  await growth.refresh();
   notice("데이터를 저장하고 요약을 갱신했어요.");
 });
 $("#data-reset").onclick = resetData;
@@ -958,6 +980,7 @@ async function loadConversation(id) {
   $(".planning-tools").open = true;
   if (state.busy) throw new Error("현재 답변이 끝난 뒤 불러와 주세요.");
   const data = await api("/api/conversations/" + id);
+  if (growth.openConversation(data)) return;
   state.conversationId = id;
   state.pending = null;
   saveActive();
@@ -1324,7 +1347,7 @@ $("#login").onclick = () =>
   });
 $("#logout").onclick = () =>
   run(async () => {
-    if (state.busy || state.editingLocks)
+    if (state.busy || state.editingLocks || growth.isBusy())
       throw new Error("저장과 답변 생성이 끝난 뒤 로그아웃해 주세요.");
     if (state.dirty && !confirm("저장하지 않은 원고가 있어요. 로그아웃할까요?"))
       return;
@@ -1332,11 +1355,14 @@ $("#logout").onclick = () =>
   });
 async function session(user) {
   state.user = user;
+  const growthReady = growth.sessionChanged();
+  imageReview.sessionChanged();
   $("#login").hidden = !!user;
   $("#logout").hidden = !user;
   $("#user-name").textContent = user?.displayName || "개인 작업실";
   $("#setup").hidden = !!user;
   if (!user) {
+    await growthReady;
     state.contents = [];
     state.data = [];
     state.series = [];
@@ -1373,11 +1399,12 @@ async function session(user) {
     $("#trend-chart").replaceChildren();
     $("#style-preview").textContent = "확인한 제작 선호가 아직 없어요.";
     renderSources();
-    show("studio");
+    show("growth");
     return;
   }
   try {
     await Promise.all([
+      growthReady,
       loadData(),
       loadContents(),
       loadPreferences(),

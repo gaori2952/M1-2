@@ -1,0 +1,853 @@
+const names = {
+  carousel: "카드뉴스",
+  reel: "릴스",
+  post: "단일 게시물",
+  story: "스토리",
+};
+const num = (v) =>
+  v === null || v === undefined
+    ? "자료 없음"
+    : Number(v).toLocaleString("ko-KR", { maximumFractionDigits: 2 });
+const node = (tag, text, cls) => {
+  const n = document.createElement(tag);
+  if (text !== undefined) n.textContent = text;
+  if (cls) n.className = cls;
+  return n;
+};
+const time = (value, zone = "Asia/Seoul") =>
+  value
+    ? new Date(value).toLocaleString("ko-KR", {
+        timeZone: zone,
+        month: "short",
+        day: "numeric",
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "아직 없음";
+const link = (label, url) => {
+  const a = node("a", label, "growth-link");
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:" && !u.username && !u.password) {
+      a.href = u.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+    }
+  } catch {}
+  return a;
+};
+
+export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
+  const past = document.querySelector("#growth-posts-root");
+  root.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">YOUR NEXT POST</span><h1>다음 게시, 팔로워로 이어지게.</h1><p>무슨 콘텐츠를 왜 올릴지, 내 게시물과 연결해 제안해요.</p></div><button id="growth-sync" class="primary">Buffer 새로 불러오기</button></header>
+ <div class="growth-connection"><strong id="growth-account">내 계정 연결</strong><span id="growth-sync-state">로그인 후 Buffer 자료를 불러올 수 있어요.</span><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div>
+ <section class="growth-metrics" id="growth-metrics"><article><span>수집 게시물</span><strong>—</strong></article><article><span>팔로우 지표 제공 게시물</span><strong>—</strong></article><article><span>카드뉴스 팔로우 전환 중앙값</span><strong>—</strong></article></section>
+ <section class="card growth-chat"><div class="section-top"><div><span class="eyebrow">01 · CONTENT</span><h2>다음에 어떤 콘텐츠를 올릴까요?</h2><p id="growth-gpt-state" class="muted">데이터 요약과 관련 게시물을 바탕으로 답해요.</p></div><button id="growth-new-chat" class="secondary">새 성장 대화</button></div><div class="growth-content-options"><label>만들고 싶은 형식<select id="growth-format"><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label><label>관심 주제 (선택)<input id="growth-topic" maxlength="300" placeholder="비워두면 기존 게시물에서 제안해요" /></label></div><p class="muted">주제를 정하지 않아도 물어보세요. 추천 제목·구성·내 게시물에서 찾은 이유를 함께 보여줘요.</p><div id="growth-messages" aria-live="polite"></div><p id="growth-loading" role="status" hidden>내 자료를 확인하며 답변을 준비하고 있어요…</p><form id="growth-chat-form"><label>질문<textarea id="growth-question" maxlength="4000" rows="2" placeholder="내 최근 게시물을 보고, 다음 콘텐츠 3개와 각각의 추천 이유를 알려줘." required></textarea></label><div class="growth-chat-actions"><button id="growth-chat-send" class="primary">AI에게 물어보기</button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-history-open" type="button" class="text-button">대화 기록</button></div></form></section>
+ <details id="growth-timing" class="growth-timing"><summary>게시 시간 비교 (선택)</summary><p class="muted">콘텐츠를 정한 뒤, 내가 올릴 수 있는 시간끼리 비교해요. 콘텐츠 주제 추천과는 별도예요.</p><div class="growth-workspace"><section class="card growth-planner"><span class="eyebrow">시간 비교</span><h2>언제 올릴지 비교하기</h2><label>비교 기준<select id="growth-observation"><option value="lifetime">현재 누적 성과 · 탐색용</option><option value="seven_day">실제 7일차 부근 관측</option></select></label><label>내가 올릴 수 있는 시간<input id="growth-slot" type="datetime-local" /></label><small id="growth-timezone">계정 시간대: Asia/Seoul · 입력은 내 기기 시간 기준</small><button id="growth-add-slot" class="secondary">가능한 시간 추가</button><div id="growth-slots" class="growth-slots"></div><details><summary>Buffer에 설정된 일정 확인</summary><div id="growth-schedule" class="growth-slots"></div><small>눌러 추가한 시간만 추천 후보에 포함해요.</small></details><button id="growth-preview" class="primary">시간 후보 확인</button><p class="muted">통계와 후보 확인에는 AI를 호출하지 않아요.</p></section>
+ <section class="card growth-advice"><span class="eyebrow">후보와 이유</span><h2>왜 이 시간인가요?</h2><div id="growth-recommendation"><p class="growth-empty">가능한 시간을 고르면 내 기록과 비교한 후보가 여기에 표시돼요.</p></div><div id="growth-evidence"></div><details class="growth-limitations"><summary>이 추천이 알 수 있는 범위</summary><p>팔로우 지표가 없는 게시물은 성장 효과를 판단하지 않아요. 누적 성과는 게시 후 경과 시간이 달라요. 시간별 차이가 원인을 증명하거나 팔로워 증가를 보장하지는 않아요.</p></details></section></div>
+</details>
+  <section class="card growth-daily"><div class="section-top"><div><h2>계정의 팔로우 흐름</h2><p id="growth-daily-summary" class="muted">저장된 일별 데이터의 기간·개수·추세를 표시해요.</p></div><button id="growth-data-open" class="text-button">데이터 관리 →</button></div><div id="growth-chart"></div><small>이 그래프는 기존에 보관한 계정 일별 자료예요. Buffer에서 자동 조회하는 게시물별 성과와는 별개예요.</small></section>
+`;
+  past.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">LEARN FROM YOUR POSTS</span><h1>지난 게시에서 다음 힌트를.</h1><p>팔로우 성과와 자료가 없는 부분을 함께 확인하세요.</p></div></header><section class="card"><span class="eyebrow">MY EXPERIMENTS</span><h2>내 게시 실험</h2><div id="growth-experiments"></div></section><section class="card"><div class="section-top"><h2>불러온 게시물</h2><label>형식 필터<select id="growth-post-filter"><option value="">전체 형식</option><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label></div><p id="growth-post-count" class="muted"></p><div id="growth-post-list" class="growth-post-grid"></div><button id="growth-more-posts" class="secondary" hidden>게시물 더 보기</button></section>`;
+  const $ = (s) => document.querySelector(s);
+  let epoch = 0,
+    user = null,
+    busy = false,
+    status = null,
+    posts = [],
+    experiments = [],
+    slots = [],
+    recommendation = null,
+    cid = null,
+    pending = null,
+    syncPending = null,
+    nextOffset = null;
+  const key = () => `follower-growth:${user?.uid}:session`;
+  function persist() {
+    if (user)
+      localStorage.setItem(
+        key(),
+        JSON.stringify({ cid, pending, syncPending }),
+      );
+  }
+  function same(e) {
+    return epoch === e && user === getUser();
+  }
+  async function request(path, opts) {
+    const e = epoch;
+    const value = await api(path, opts);
+    if (!same(e)) throw new Error("로그인 상태가 바뀌었어요. 다시 시작하세요.");
+    return value;
+  }
+  function action(label, fn, cls = "secondary") {
+    const b = node("button", label, cls);
+    b.type = "button";
+    b.onclick = () => run(fn);
+    return b;
+  }
+  async function run(fn) {
+    if (busy) return;
+    busy = true;
+    const e = epoch;
+    const controls = [
+      ...root.querySelectorAll("button,input,select,textarea"),
+      ...past.querySelectorAll("button,input,select,textarea"),
+      $("#growth-data-sync"),
+    ].map((n) => [n, n.disabled]);
+    controls.forEach(([n]) => (n.disabled = true));
+    try {
+      await fn();
+    } catch (error) {
+      if (same(e)) notice(error.message, true);
+    } finally {
+      if (same(e)) {
+        busy = false;
+        controls.forEach(([n, d]) => (n.disabled = d));
+        $("#growth-chat-send").disabled = !user || !status?.chat_configured;
+        $("#growth-chat-recover").hidden = !pending;
+        $("#growth-sync-recover").hidden = !syncPending;
+        $("#growth-loading").hidden = true;
+      }
+    }
+  }
+  function appendMessage(role, text, result) {
+    const item = node("article", undefined, `growth-message ${role}`);
+    item.append(
+      node("small", role === "user" ? "나" : "성장 비서"),
+      node("p", text),
+    );
+    for (const [i, idea] of (result?.ideas || []).entries()) {
+      const card = node("section", undefined, "growth-content-idea");
+      card.append(node("h3", `${i + 1}. ${idea.title}`));
+      for (const [label, value] of [
+        ["왜 추천하냐면", idea.reason],
+        ["기존 게시물에서 바꿀 점", idea.relationship],
+        ["이렇게 만들어요", idea.objective],
+      ]) {
+        card.append(node("h4", label), node("p", value));
+      }
+      for (const id of idea.source_ids) {
+        const detail = result.growth?.evidence.find((p) => p.id === id);
+        const source =
+          detail || result.growth?.content_history?.find((p) => p.id === id);
+        if (!source) continue;
+        const ref = node("div", undefined, "growth-idea-source");
+        ref.append(
+          link(
+            `참고 게시물: ${(source.text || source.caption_excerpt || "").slice(0, 100) || "캡션 없음"} ↗`,
+            source.external_link,
+          ),
+          node(
+            "small",
+            detail
+              ? `${names[source.format] || "게시물"} · API 팔로우 ${num(source.metrics?.follows)} · 도달 ${num(source.metrics?.reach)} · ${time(source.sent_at)}`
+              : `${names[source.format] || "게시물"} · ${time(source.sent_at)} · 캡션 일부 참고 · 성과 수치 미포함`,
+          ),
+          node(
+            "small",
+            detail
+              ? `참고 이유: ${(source.reference_basis || []).join(" · ")} · 지표 갱신 ${time(source.metrics_updated_at)}`
+              : "확인한 캡션 범위에서 주제를 참고했어요.",
+          ),
+        );
+        card.append(ref);
+      }
+      if (!idea.source_ids.length)
+        card.append(node("small", "새 기획 제안 · 연결된 참고 게시물 없음"));
+      item.append(card);
+    }
+    $("#growth-messages").append(item);
+  }
+  function renderSlots() {
+    const box = $("#growth-slots");
+    box.replaceChildren();
+    for (const slot of slots)
+      box.append(
+        action(`${time(slot, status?.channel?.timezone)} ×`, () => {
+          slots = slots.filter((s) => s !== slot);
+          renderSlots();
+        }),
+      );
+  }
+  function addSlot(value) {
+    if (
+      !value ||
+      new Date(value) <= new Date() ||
+      new Date(value) > new Date(Date.now() + 7 * 86400000)
+    )
+      throw new Error("지금부터 7일 이내의 가능한 시간을 선택하세요.");
+    if (slots.length >= 14) throw new Error("가능한 시간은 최대 14개예요.");
+    slots = [...new Set([...slots, new Date(value).toISOString()])];
+    renderSlots();
+  }
+  function options() {
+    return {
+      format: $("#growth-format").value,
+      topic: $("#growth-topic").value.trim(),
+      slots,
+      observation_mode: $("#growth-observation").value,
+    };
+  }
+  function renderStatus(summary) {
+    const s = status;
+    $("#growth-account").textContent =
+      s?.channel?.name || "Buffer 계정을 연결해 주세요";
+    $("#growth-sync-state").textContent = s?.last_success_at
+      ? `최근 성공 ${time(s.last_success_at)}${s.last_error ? ` · 최근 시도 실패 (${s.last_error}) · 이전 자료 표시 중` : ""}`
+      : "첫 동기화를 시작해 주세요. 키·소유 UID·채널은 서버 환경 변수로 설정해요.";
+    $("#growth-gpt-state").textContent = s?.chat_configured
+      ? `${s.assistant_provider === "anthropic" ? "Claude" : "GPT"}가 데이터 요약과 관련 게시물을 바탕으로 답해요.`
+      : "설정한 AI의 API 키를 확인해 주세요. 통계·시간 후보·실험 저장은 먼저 사용할 수 있어요.";
+    $("#growth-chat-send").disabled = !user || !s?.chat_configured;
+    $("#growth-timezone").textContent =
+      `계정 시간대: ${s?.channel?.timezone || "Asia/Seoul"} · 입력은 내 기기 시간 기준`;
+    const data = [
+      ["수집 게시물", s?.count ?? 0, "Buffer에서 불러온 게시 완료 자료"],
+      [
+        "팔로우 지표 제공 게시물",
+        s?.follows_count ?? 0,
+        "API가 숫자를 제공한 게시물 · 0건도 포함 · 성공한 게시물 수가 아니에요",
+      ],
+      [
+        "카드뉴스 팔로우 전환 중앙값",
+        summary?.formats?.carousel?.median_conversion === null
+          ? "자료 없음"
+          : `${num(summary?.formats?.carousel?.median_conversion)}%`,
+        "게시물별 (팔로우 ÷ 도달 × 100)의 중앙값 · 누적 지표 기준",
+      ],
+    ];
+    $("#growth-metrics").replaceChildren(
+      ...data.map(([label, v, help]) => {
+        const a = node("article");
+        a.append(
+          node("span", label),
+          node("strong", String(v)),
+          node("small", help),
+        );
+        return a;
+      }),
+    );
+    const schedule = $("#growth-schedule");
+    schedule.replaceChildren();
+    const days = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 };
+    for (const d of s?.channel?.postingSchedule || []) {
+      if (d.paused) continue;
+      for (const t of d.times) {
+        const zone = s.channel.timezone; // Explicitly supported schedule conversion; arbitrary zones use manual input.
+        if (zone !== "Asia/Seoul") {
+          schedule.append(
+            node(
+              "small",
+              `${d.day} ${t} (${zone}) · 가능한 시간에 직접 입력하세요.`,
+            ),
+          );
+          continue;
+        }
+        const today = new Date(
+          new Date().toLocaleString("en-US", { timeZone: zone }),
+        );
+        const date = new Date(
+          Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()),
+        );
+        let offset = (days[d.day] - date.getUTCDay() + 7) % 7;
+        date.setUTCDate(date.getUTCDate() + offset);
+        let value = `${date.toISOString().slice(0, 10)}T${t}:00+09:00`;
+        if (new Date(value) <= new Date()) {
+          date.setUTCDate(date.getUTCDate() + 7);
+          value = `${date.toISOString().slice(0, 10)}T${t}:00+09:00`;
+        }
+        if (new Date(value) <= new Date(Date.now() + 7 * 86400000))
+          schedule.append(
+            action(`${time(value, zone)} 추가`, () => addSlot(value)),
+          );
+      }
+    }
+    if (!schedule.children.length)
+      schedule.append(
+        node(
+          "p",
+          "설정된 다음 7일 일정이 없어요. 가능한 시간을 직접 추가하세요.",
+          "muted",
+        ),
+      );
+  }
+  function renderDaily(records, summary) {
+    const values = records
+      .filter((r) => r.value !== null)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const m = summary?.metrics?.follows;
+    $("#growth-daily-summary").textContent = values.length
+      ? `${values[0].date} ~ ${values.at(-1).date} · ${values.length}개 유효 관측 · 최근 평균 ${num(m?.average)} · ${{ up: "증가", down: "감소", stable: "유지", insufficient_data: "이전 기간 비교 자료 부족" }[m?.trend] || "비교 자료 부족"}`
+      : "별도로 보관한 계정 일별 기록이 없어요. Buffer 게시물별 성과는 새로 불러오기로 확인할 수 있어요.";
+    const chart = $("#growth-chart");
+    chart.replaceChildren();
+    if (values.length < 2) return;
+    const ns = "http://www.w3.org/2000/svg",
+      svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 900 115");
+    svg.setAttribute("role", "img");
+    svg.setAttribute(
+      "aria-label",
+      `일별 팔로우 추이, ${values.length}개 관측. 최소 ${Math.min(...values.map((r) => r.value))}, 최대 ${Math.max(...values.map((r) => r.value))}`,
+    );
+    const max = Math.max(1, ...values.map((r) => r.value));
+    const start = new Date(values[0].date).getTime(),
+      span = Math.max(1, new Date(values.at(-1).date) - start);
+    const points = values
+      .map(
+        (r) =>
+          `${10 + ((new Date(r.date) - start) / span) * 880},${100 - (r.value / max) * 85}`,
+      )
+      .join(" ");
+    const poly = document.createElementNS(ns, "polyline");
+    poly.setAttribute("points", points);
+    poly.setAttribute("fill", "none");
+    poly.setAttribute("stroke", "currentColor");
+    poly.setAttribute("stroke-width", "2.5");
+    svg.append(poly);
+    chart.append(svg);
+  }
+  function renderRecommendation(r) {
+    recommendation = r;
+    const box = $("#growth-recommendation");
+    box.replaceChildren();
+    const stat = r.summary.formats[r.format];
+    box.append(
+      node(
+        "p",
+        `${names[r.format]} ${stat.count}개 · 전환율 유효 ${stat.conversion_count}개 · ${r.observation_mode === "seven_day" ? "실제 7일차 부근 관측" : "현재 누적 성과·탐색용"}`,
+        "muted",
+      ),
+    );
+    for (const reason of r.missing)
+      box.append(node("p", reason, "growth-warning"));
+    for (const c of r.candidates) {
+      const item = node("article", undefined, "growth-candidate");
+      item.append(
+        node(
+          "span",
+          c.kind === "experiment" ? "새 실험" : "관측 패턴 참고",
+          "tag",
+        ),
+        node("h3", time(c.at, r.timezone)),
+        node("p", c.reason),
+      );
+      if (c.sample_count)
+        item.append(
+          node(
+            "small",
+            `비교 ${c.sample_count}개 · 전환 중앙값 ${num(c.median_conversion)}%`,
+          ),
+        );
+      item.append(
+        action("이 시간으로 실험 저장", async () => {
+          await request("/api/growth/experiments", {
+            method: "POST",
+            body: { request_id: r.request_id, candidate_id: c.id },
+          });
+          await loadExperiments();
+          notice(
+            "게시 실험을 저장했어요. 게시 후 지난 게시에서 실제 글을 연결하세요.",
+          );
+        }),
+      );
+      box.append(item);
+    }
+    const evidence = $("#growth-evidence");
+    evidence.replaceChildren();
+    const compared = r.time_evidence || r.evidence;
+    if (r.candidates.length && compared.length)
+      evidence.append(
+        node("h3", "후보 시간대의 비교 게시물 · 시간대당 최대 5개"),
+      );
+    for (const p of r.candidates.length ? compared : []) {
+      const item = node("article", undefined, "growth-evidence-item");
+      item.append(
+        link(p.text.slice(0, 95) || "캡션 없는 게시물", p.external_link),
+        node(
+          "small",
+          `${time(p.sent_at, r.timezone)} · 팔로우 ${num(p.metrics?.follows)} · 도달 ${num(p.metrics?.reach)}`,
+        ),
+        node("small", `지표 갱신 ${time(p.metrics_updated_at, r.timezone)}`),
+      );
+      evidence.append(item);
+    }
+  }
+  let annotationDrafts = new Map();
+  function postCard(original) {
+    const p = {
+      ...original,
+      annotation: annotationDrafts.get(original.id) || original.annotation,
+    };
+    const card = node("article", undefined, "growth-post card");
+    card.append(
+      node("span", `${names[p.format] || p.format} · ${p.status}`, "tag"),
+      node("h3", p.text.slice(0, 110) || "캡션 없는 게시물"),
+      node(
+        "small",
+        `${time(p.sent_at)} · 지표 갱신 ${time(p.metrics_updated_at)}`,
+      ),
+    );
+    const metrics = node("div", undefined, "growth-post-metrics");
+    for (const [k, label] of [
+      ["follows", "팔로우"],
+      ["reach", "도달"],
+      ["views", "조회"],
+      ["saves", "저장"],
+      ["shares", "공유"],
+    ]) {
+      const d = node("div");
+      d.append(node("span", label), node("strong", num(p.metrics[k])));
+      metrics.append(d);
+    }
+    card.append(metrics, link("Instagram에서 보기 ↗", p.external_link));
+    const details = node("details");
+    details.append(node("summary", "주제·메모·수동 보완"));
+    details.open = annotationDrafts.has(p.id);
+    const tags = node("input");
+    tags.placeholder = "주제 태그 (쉼표 구분)";
+    tags.value = (p.annotation?.tags || []).join(", ");
+    const memo = node("textarea");
+    memo.placeholder = "다음에 참고할 메모";
+    memo.maxLength = 2000;
+    memo.value = p.annotation?.memo || "";
+    const follows = node("input");
+    follows.type = "number";
+    follows.min = "0";
+    follows.placeholder = "수동 팔로우 수 · 원본과 분리";
+    follows.value = p.annotation?.manual_follows ?? "";
+    const captureDraft = () =>
+      annotationDrafts.set(p.id, {
+        ...p.annotation,
+        tags: tags.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        memo: memo.value,
+        manual_follows: follows.value === "" ? null : Number(follows.value),
+      });
+    for (const input of [tags, memo, follows])
+      input.addEventListener("input", captureDraft);
+    for (const [label, input] of [
+      ["주제 태그", tags],
+      ["메모", memo],
+      ["수동 팔로우", follows],
+    ]) {
+      const l = node("label", label);
+      l.append(input);
+      details.append(l);
+    }
+    details.append(
+      action("메모 저장", async () => {
+        await request(
+          `/api/buffer/posts/${encodeURIComponent(p.id)}/annotation`,
+          {
+            method: "PUT",
+            body: {
+              ...{
+                tags: tags.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+                memo: memo.value,
+                manual_follows:
+                  follows.value === "" ? null : Number(follows.value),
+              },
+            },
+          },
+        );
+        notice("메모와 수동 값을 저장했어요. Buffer 원본 수치는 유지돼요.");
+        annotationDrafts.delete(p.id);
+        await loadPosts(true);
+      }),
+    );
+    card.append(details);
+    return card;
+  }
+  async function loadPosts(reset = true) {
+    const data = await request(
+      `/api/buffer/posts?limit=30&offset=${reset ? 0 : nextOffset || 0}${$("#growth-post-filter").value ? `&format=${$("#growth-post-filter").value}` : ""}`,
+    );
+    posts = reset ? data.items : [...posts, ...data.items];
+    nextOffset = data.next_offset;
+    $("#growth-post-count").textContent =
+      `${data.total}개 중 ${posts.length}개 표시 · 팔로우 자료 없음은 0이 아니에요.`;
+    $("#growth-post-list").replaceChildren(...posts.map(postCard));
+    $("#growth-more-posts").hidden = nextOffset === null;
+  }
+  function renderExperiments() {
+    const box = $("#growth-experiments");
+    box.replaceChildren();
+    if (!experiments.length)
+      box.append(
+        node(
+          "p",
+          "아직 실험이 없어요. 다음 게시에서 시간 후보를 저장하세요.",
+          "muted",
+        ),
+      );
+    const labels = {
+      planned: "게시 대기",
+      linked: "게시물 연결됨",
+      awaiting_observation: "비교 관측 기다리는 중",
+      observed: "7일차 부근 관측 확보",
+      cancelled: "취소됨",
+    };
+    for (const e of experiments) {
+      const card = node("article", undefined, "growth-experiment");
+      card.append(
+        node("span", labels[e.status], "tag"),
+        node("h3", `${e.topic || "주제 미지정"} · ${names[e.format]}`),
+        node("p", `선택한 시간 ${time(e.candidate.at, e.baseline.timezone)}`),
+      );
+      if (e.post_id)
+        card.append(
+          node(
+            "p",
+            `${e.deviated ? "계획과 다른 시간" : "계획한 시간 부근"} · 실제 게시 ${time(e.actual_sent_at)} · 차이 ${num(e.time_difference_minutes)}분`,
+          ),
+        );
+      if (e.observation_message) card.append(node("p", e.observation_message));
+      if (e.observed_metrics)
+        card.append(
+          node(
+            "p",
+            `관측 팔로우 ${num(e.observed_metrics.follows)} · 전환율 ${num(e.observed_conversion)}%`,
+          ),
+        );
+      if (e.status !== "cancelled") {
+        const select = node("select");
+        select.setAttribute("aria-label", "연결할 실제 게시물");
+        select.append(new Option("실제 게시 완료 글을 선택하세요", ""));
+        for (const p of posts.filter(
+          (p) => p.format === e.format && p.status === "sent",
+        ))
+          select.append(
+            new Option(`${time(p.sent_at)} · ${p.text.slice(0, 35)}`, p.id),
+          );
+        select.value = e.post_id || "";
+        card.append(
+          select,
+          action("게시물 연결", async () => {
+            if (!select.value) throw new Error("실제 게시물을 선택하세요.");
+            await request(`/api/growth/experiments/${e.id}`, {
+              method: "PUT",
+              body: { post_id: select.value, memo: e.memo || "" },
+            });
+            await loadExperiments();
+          }),
+          action(
+            "실험 취소",
+            async () => {
+              await request(`/api/growth/experiments/${e.id}`, {
+                method: "PUT",
+                body: { cancelled: true, memo: e.memo || "" },
+              });
+              await loadExperiments();
+            },
+            "text-button",
+          ),
+        );
+      }
+      box.append(card);
+    }
+  }
+  async function loadExperiments() {
+    experiments = await request("/api/growth/experiments");
+    renderExperiments();
+  }
+  async function refresh() {
+    if (!user) return;
+    const refreshEpoch = epoch;
+    const results = await Promise.allSettled([
+      request("/api/buffer/status"),
+      request("/api/growth/summary"),
+      request("/api/data?metric=follows"),
+      request("/api/data/summary"),
+    ]);
+    if (!same(refreshEpoch)) return;
+    if (results[0].status === "fulfilled") {
+      status = results[0].value;
+      renderStatus(results[1].status === "fulfilled" ? results[1].value : null);
+      await loadPosts();
+      if (!same(refreshEpoch)) return;
+      await loadExperiments();
+      if (!same(refreshEpoch)) return;
+    } else {
+      $("#growth-sync-state").textContent = results[0].reason.message;
+      $("#growth-gpt-state").textContent =
+        "Buffer 서버 설정을 먼저 확인하세요.";
+    }
+    if (results[2].status === "fulfilled")
+      renderDaily(
+        results[2].value,
+        results[3].status === "fulfilled" ? results[3].value : null,
+      );
+  }
+  async function recoverSync() {
+    if (!syncPending) return;
+    try {
+      const result = await request(`/api/buffer/sync/${syncPending}`);
+      if (result.status === "done" || result.status === "failed") {
+        syncPending = null;
+        persist();
+        await refresh();
+        notice(
+          result.status === "done"
+            ? "동기화 완료를 확인했어요."
+            : "동기화가 실패했어요. 이전 자료를 유지하며 새로 불러오기를 다시 사용할 수 있어요.",
+        );
+      } else notice("동기화가 진행 중이에요. 잠시 후 상태를 확인하세요.");
+    } catch (e) {
+      if (e.status === 404) {
+        await request("/api/buffer/sync", {
+          method: "POST",
+          body: { request_id: syncPending },
+        });
+        syncPending = null;
+        persist();
+        await refresh();
+      } else throw e;
+    }
+  }
+  async function recoverChat() {
+    if (!pending) return;
+    try {
+      const r = await request(`/api/chat/requests/${pending.request_id}`);
+      if (r.status === "done") {
+        cid = r.response.conversation_id;
+        pending = null;
+        persist();
+        await openById(cid);
+        notice("저장된 답변을 복구했어요.");
+      } else if (r.status === "failed" || r.status === "deleted") {
+        pending = null;
+        persist();
+        notice("요청이 완료되지 않았어요. 입력을 확인하고 새로 질문하세요.");
+      } else notice("답변 처리 중이에요. 잠시 후 다시 확인하세요.");
+    } catch (e) {
+      if (e.status === 404) {
+        await sendChat(true);
+      } else throw e;
+    }
+  }
+  async function sendChat(retry = false) {
+    if (pending && !retry) {
+      await recoverChat();
+      return;
+    }
+    if (!pending) {
+      pending = {
+        request_id: crypto.randomUUID(),
+        mode: "growth",
+        message: $("#growth-question").value.trim(),
+        conversation_id: cid,
+        growth_options: options(),
+      };
+      if (!pending.message) {
+        pending = null;
+        return;
+      }
+      persist();
+    }
+    $("#growth-loading").hidden = false;
+    try {
+      const r = await request("/api/chat", { method: "POST", body: pending });
+      cid = r.conversation_id;
+      pending = null;
+      persist();
+      await openById(cid);
+      $("#growth-question").value = "";
+      notice("성장 상담과 근거를 대화에 저장했어요.");
+    } catch (e) {
+      if (
+        [401, 403, 404, 410, 422, 429, 502].includes(e.status) ||
+        (e.status === 503 && /(OPENAI|ANTHROPIC)_API_KEY/.test(e.message))
+      ) {
+        pending = null;
+        persist();
+      }
+      throw e;
+    }
+  }
+  async function openById(id) {
+    const data = await request(`/api/conversations/${id}`);
+    openConversation(data);
+  }
+  function openConversation(data) {
+    const last = [...data.messages].reverse().find((m) => m.result?.growth);
+    if (!last) return false;
+    cid = data.id;
+    persist();
+    $("#growth-messages").replaceChildren();
+    for (const m of data.messages) appendMessage(m.role, m.content, m.result);
+    const g = last.result.growth;
+    $("#growth-format").value = g.format;
+    $("#growth-topic").value = g.topic;
+    $("#growth-observation").value = g.observation_mode;
+    renderRecommendation(g);
+    show("growth");
+    return true;
+  }
+  $("#growth-add-slot").onclick = () =>
+    run(() => addSlot($("#growth-slot").value));
+  $("#growth-preview").onclick = () =>
+    run(async () => {
+      const r = await request("/api/growth/recommendations", {
+        method: "POST",
+        body: { request_id: crypto.randomUUID(), options: options() },
+      });
+      renderRecommendation(r);
+    });
+  $("#growth-sync").onclick = () =>
+    run(async () => {
+      if (syncPending) {
+        await recoverSync();
+        return;
+      }
+      syncPending = crypto.randomUUID();
+      persist();
+      try {
+        await request("/api/buffer/sync", {
+          method: "POST",
+          body: { request_id: syncPending },
+        });
+        syncPending = null;
+        persist();
+        await refresh();
+        notice("Buffer 자료를 확인했어요.");
+      } catch (e) {
+        if ([401, 403, 422, 429].includes(e.status)) {
+          syncPending = null;
+          persist();
+          await refresh();
+        }
+        throw e;
+      }
+    });
+  $("#growth-data-sync").onclick = $("#growth-sync").onclick;
+  $("#growth-sync-recover").onclick = () => run(recoverSync);
+  $("#growth-chat-recover").onclick = () => run(recoverChat);
+  $("#growth-chat-form").onsubmit = (e) => {
+    e.preventDefault();
+    run(() => sendChat());
+  };
+  $("#growth-new-chat").onclick = () =>
+    run(() => {
+      if (pending) throw new Error("먼저 답변 저장 상태를 확인하세요.");
+      cid = null;
+      persist();
+      $("#growth-messages").replaceChildren();
+      notice("새 성장 대화를 시작했어요.");
+    });
+  $("#growth-data-open").onclick = () => show("data");
+  $("#growth-history-open").onclick = () => show("history");
+  $("#growth-post-filter").onchange = () =>
+    run(async () => {
+      await loadPosts();
+      renderExperiments();
+    });
+  $("#growth-more-posts").onclick = () =>
+    run(async () => {
+      await loadPosts(false);
+      renderExperiments();
+    });
+  const importForm = document.querySelector("#growth-csv-form");
+  if (importForm)
+    importForm.onsubmit = (e) => {
+      e.preventDefault();
+      run(async () => {
+        const file = $("#growth-csv-file").files[0];
+        if (!file) throw new Error("CSV 파일을 선택하세요.");
+        if (file.size > 2 * 1024 * 1024)
+          throw new Error("CSV는 2MB 이하로 선택하세요.");
+        const result = await request("/api/data/import", {
+          method: "POST",
+          body: { csv_text: await file.text() },
+        });
+        $("#growth-csv-result").textContent =
+          `${result.date_count}일 · 추가 ${result.imported}개 · 기존 자료 유지 ${result.skipped}개 · 유효 ${result.valid_count}개 · 결측 ${result.missing_count}개`;
+        await loadData();
+        await refresh();
+      });
+    };
+  async function sessionChanged() {
+    epoch++;
+    const sessionEpoch = epoch;
+    user = getUser();
+    busy = false;
+    status = null;
+    posts = [];
+    experiments = [];
+    slots = [];
+    cid = null;
+    pending = null;
+    syncPending = null;
+    recommendation = null;
+    annotationDrafts = new Map();
+    for (const id of [
+      "growth-messages",
+      "growth-evidence",
+      "growth-post-list",
+      "growth-experiments",
+      "growth-chart",
+      "growth-slots",
+      "growth-schedule",
+    ])
+      $("#" + id).replaceChildren();
+    $("#growth-topic").value = "";
+    $("#growth-question").value = "";
+    $("#growth-slot").value = "";
+    $("#growth-account").textContent = "내 계정 연결";
+    $("#growth-recommendation").replaceChildren(
+      node(
+        "p",
+        "가능한 시간을 고르면 내 기록과 비교한 후보가 표시돼요.",
+        "growth-empty",
+      ),
+    );
+    $("#growth-daily-summary").textContent =
+      "로그인 후 저장된 일별 팔로우가 표시돼요.";
+    $("#growth-sync-state").textContent =
+      "로그인 후 Buffer 자료를 불러올 수 있어요.";
+    $("#growth-metrics").replaceChildren();
+    $("#growth-loading").hidden = true;
+    $("#growth-sync-recover").hidden = true;
+    $("#growth-chat-recover").hidden = true;
+    $("#growth-data-sync").disabled = !user;
+    for (const control of [
+      ...root.querySelectorAll("button,input,textarea,select"),
+      ...past.querySelectorAll("button,input,textarea,select"),
+    ])
+      control.disabled = !user;
+    if (!user) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(key()) || "{}");
+      cid = saved.cid || null;
+      pending = saved.pending || null;
+      syncPending = saved.syncPending || null;
+    } catch {
+      notice(
+        "저장된 진행 상태를 읽지 못했어요. 대화 기록에서 확인하세요.",
+        true,
+      );
+    }
+    await refresh();
+    if (!same(sessionEpoch)) return;
+    $("#growth-sync-recover").hidden = !syncPending;
+    $("#growth-chat-recover").hidden = !pending;
+    if (pending) $("#growth-question").value = pending.message;
+    if (cid) {
+      try {
+        await openById(cid);
+      } catch (e) {
+        if (e.status === 404) {
+          cid = null;
+          persist();
+        } else notice(e.message, true);
+      }
+    }
+  }
+  return { sessionChanged, refresh, openConversation, isBusy: () => busy };
+}

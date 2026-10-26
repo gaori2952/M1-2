@@ -8,7 +8,11 @@
     "test:build": "node --test tests/build.test.mjs",
     "test:durability": "node tests/e2e/durability.mjs",
     "test:editor": "node tests/e2e/editor.mjs",
-    "test:editor-regressions": "node tests/e2e/editor-regressions.mjs"
+    "test:editor-regressions": "node tests/e2e/editor-regressions.mjs",
+    "test:image-review": "node tests/e2e/image-review.mjs",
+    "test:image-review-regressions": "node tests/e2e/image-review-regressions.mjs",
+    "test:growth": "node tests/e2e/growth.mjs",
+    "test:growth-regressions": "node tests/e2e/growth-regressions.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0",

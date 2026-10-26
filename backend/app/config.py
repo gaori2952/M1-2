@@ -17,6 +17,9 @@ class Settings:
     anthropic_model: str = "claude-sonnet-4"
     max_output_tokens: int = 4000
     daily_request_limit: int = 30
+    buffer_api_key: str = ""
+    buffer_channel_id: str = ""
+    buffer_owner_uid: str = ""
 
     @property
     def generator_configured(self):
@@ -36,6 +39,9 @@ class Settings:
             raise ValueError("LLM_PROVIDER must be openai or anthropic")
 
         return cls(
+            buffer_api_key=os.getenv("BUFFER_API_KEY", ""),
+            buffer_channel_id=os.getenv("BUFFER_CHANNEL_ID", ""),
+            buffer_owner_uid=os.getenv("BUFFER_OWNER_UID", ""),
             llm_provider=provider,
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
             anthropic_base_url=os.getenv("ANTHROPIC_BASE_URL", ""),

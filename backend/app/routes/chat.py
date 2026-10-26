@@ -1,17 +1,37 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .. import editor_service as editor
 from .. import repository as repo
 from ..auth import require_owner
-from ..chat_service import run_chat
+from ..chat_service import request_status, run_chat
 from ..models import ChatInput, DraftUpdate, ReviewInput
 from .resources import store
 
 router = APIRouter(prefix="/api", dependencies=[Depends(require_owner)])
 
 
+@router.get("/chat/requests/{request_id}")
+def chat_status(request_id: UUID, uid=Depends(require_owner), db=Depends(store)):
+    return request_status(db, uid, request_id)
+
+
 @router.post("/chat")
 def chat(body: ChatInput, request: Request, uid=Depends(require_owner), db=Depends(store)):
+    if body.mode == "growth":
+        settings = request.app.state.settings
+        if not settings.generator_configured:
+            key_name = (
+                "ANTHROPIC_API_KEY" if settings.llm_provider == "anthropic" else "OPENAI_API_KEY"
+            )
+            raise HTTPException(
+                503,
+                f"성장 상담에는 {key_name} 설정이 필요합니다. 통계와 시간 후보는 AI 호출 없이 확인할 수 있어요.",
+            )
+        return run_chat(
+            db, request.app.state.growth_generator, request.app.state.settings, uid, body
+        )
     return run_chat(db, request.app.state.generator, request.app.state.settings, uid, body)
 
 

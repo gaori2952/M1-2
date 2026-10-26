@@ -5,18 +5,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .anthropic_generation import AnthropicGenerator
+from .buffer_client import BufferClient
 from .config import Settings
 from .generation import OpenAIGenerator
+from .image_review_generation import ImageReviewer
+from .image_review_limits import ImageReviewBodyLimit
 from .routes.chat import router as chat_router
 from .routes.editor import router as editor_router
+from .routes.growth import router as growth_router
+from .routes.image_reviews import router as image_review_router
 from .routes.resources import router
 from .store import Firebase, FirestoreStore
 
 
-def create_app(settings=None, *, store=None, verify_token=None, generator=None):
+def create_app(
+    settings=None,
+    *,
+    store=None,
+    verify_token=None,
+    generator=None,
+    image_reviewer=None,
+    buffer_client=None,
+    growth_generator=None,
+):
     settings = settings or Settings.from_env()
     firebase = Firebase(settings)
-    app = FastAPI(title="M1-2 콘텐츠 비서", version="0.1.0")
+    app = FastAPI(title="M1-2 팔로워 성장 비서", version="0.2.0")
     app.state.settings = settings
     app.state.store = store if store is not None else FirestoreStore(firebase)
     app.state.verify_token = verify_token or firebase.verify
@@ -24,6 +38,10 @@ def create_app(settings=None, *, store=None, verify_token=None, generator=None):
         AnthropicGenerator if settings.llm_provider == "anthropic" else OpenAIGenerator
     )
     app.state.generator = generator or default_generator(settings)
+    app.state.growth_generator = growth_generator or app.state.generator
+    app.state.buffer_client = buffer_client or BufferClient(settings)
+    app.state.image_reviewer = image_reviewer or ImageReviewer(settings)
+    app.add_middleware(ImageReviewBodyLimit)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
@@ -55,6 +73,8 @@ def create_app(settings=None, *, store=None, verify_token=None, generator=None):
     app.include_router(router)
     app.include_router(chat_router)
     app.include_router(editor_router)
+    app.include_router(image_review_router)
+    app.include_router(growth_router)
     return app
 
 

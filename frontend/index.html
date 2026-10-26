@@ -4,31 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />
-    <title>Contents</title>
+    <title>Next Post · 팔로워 성장 비서</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="image-review.css" />
+    <link rel="stylesheet" href="growth.css" />
     <script src="config.js"></script>
     <script type="module" src="app.js"></script>
   </head>
   <body>
     <aside class="sidebar">
-      <a class="brand" href="#">Contents</a>
+      <a class="brand" href="#">Next Post</a>
       <nav aria-label="주요 메뉴">
-        <span class="nav-group">만들기</span
-        ><button data-view="studio" class="active">
-          <span aria-hidden="true">✦</span>작업실</button
-        ><button data-view="drafts">
-          <span aria-hidden="true">▣</span>원고함</button
-        ><span class="nav-group">자료</span
-        ><button data-view="library">
-          <span aria-hidden="true">▤</span>콘텐츠 라이브러리</button
-        ><button data-view="data">
-          <span aria-hidden="true">↗</span>계정 데이터</button
-        ><span class="nav-group">관리</span
-        ><button data-view="history">
-          <span aria-hidden="true">◷</span>대화 기록</button
-        ><button data-view="preferences">
-          <span aria-hidden="true">⚙</span>제작 선호
-        </button>
+        <button data-view="growth" class="active">다음 게시</button>
+        <button data-view="posts">지난 게시</button>
+        <button data-view="data">내 데이터</button>
+        <details class="legacy-tools">
+          <summary>기존 제작 도구</summary>
+          <span class="nav-group">검토</span
+          ><button data-view="review">
+            <span aria-hidden="true">▧</span>이미지 검토
+          </button>
+          <span class="nav-group">제작 도구</span
+          ><button data-view="studio">
+            <span aria-hidden="true">✦</span>작업실</button
+          ><button data-view="drafts">
+            <span aria-hidden="true">▣</span>원고함</button
+          ><span class="nav-group">자료</span
+          ><button data-view="library">
+            <span aria-hidden="true">▤</span>콘텐츠 라이브러리</button
+          ><button data-view="data">
+            <span aria-hidden="true">↗</span>계정 데이터</button
+          ><span class="nav-group">관리</span
+          ><button data-view="history">
+            <span aria-hidden="true">◷</span>대화 기록</button
+          ><button data-view="preferences">
+            <span aria-hidden="true">⚙</span>제작 선호
+          </button>
+        </details>
       </nav>
       <div class="account">
         <span id="user-name">개인 작업실</span
@@ -40,9 +52,19 @@
     <main>
       <div id="notice" role="status" aria-live="polite" hidden></div>
       <div id="setup" class="setup" hidden>
-        Google 로그인 후 저장한 카드와 개인 자료를 불러올 수 있어요.
+        Google 로그인 후 내 게시 기록을 불러오고 팔로워 성장을 위한 다음 게시를
+        준비하세요.
       </div>
-      <section id="view-studio" class="view">
+      <section id="view-growth" class="view">
+        <div id="growth-root"></div>
+      </section>
+      <section id="view-posts" class="view" hidden>
+        <div id="growth-posts-root"></div>
+      </section>
+      <section id="view-review" class="view" hidden>
+        <div id="image-review-root"></div>
+      </section>
+      <section id="view-studio" class="view" hidden>
         <div class="page-heading">
           <div>
             <span class="eyebrow">YOUR CARDS, YOUR CONTROL</span>
@@ -378,6 +400,43 @@
         </div>
       </section>
       <section id="view-data" class="view" hidden>
+        <div class="growth-nav-sub">
+          <button data-view="data" class="secondary">일별 데이터</button
+          ><button data-view="history" class="secondary">대화 기록</button>
+        </div>
+        <section class="card growth-data-source">
+          <h2>Instagram 자료는 Buffer에서 자동으로 가져와요.</h2>
+          <p>
+            게시물·캡션·게시 시각·성과를 새로 불러오기로 갱신해요. 파일을 등록할
+            필요가 없어요.
+          </p>
+          <button id="growth-data-sync" class="primary">
+            Buffer 자료 갱신
+          </button>
+          <p class="muted">
+            아래 일별 기록은 기존에 보관한 계정 자료예요. 게시물별 누적 성과와는
+            따로 관리해요.
+          </p>
+        </section>
+        <details class="growth-csv-optional">
+          <summary>이전 일별 자료 추가 (선택)</summary>
+          <form id="growth-csv-form" class="card growth-csv">
+            <h2>과거 자료를 보완할 때만 사용해요.</h2>
+            <p>
+              date, views, viewers, interactions, visits, follows, link_clicks
+              열을 사용해요. 같은 날짜·지표는 기존 값을 유지하고, 빈 값은
+              결측으로 보관해요.
+            </p>
+            <label
+              >CSV 파일<input
+                id="growth-csv-file"
+                type="file"
+                accept=".csv,text/csv"
+                required /></label
+            ><button class="secondary">CSV 가져오기</button>
+            <p id="growth-csv-result" role="status"></p>
+          </form>
+        </details>
         <div class="page-heading">
           <div>
             <span class="eyebrow">ACCOUNT CONTEXT</span>
