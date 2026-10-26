@@ -69,13 +69,22 @@ class SyntheticGrowth(PreviewGenerator):
         }
 
 
+for record in store.list("data", "alice"):
+    store.set("data", record["id"], record | {"source": "imported"})
+
 for i in range(120):
     day = str((datetime.now(timezone.utc) - timedelta(days=119 - i)).date())
     create(
         store,
         "data",
         "alice",
-        {"date": day, "metric": "follows", "value": 20 + i % 13, "memo": "합성 시계열"},
+        {
+            "date": day,
+            "metric": "follows",
+            "value": 20 + i % 13,
+            "memo": "합성 시계열",
+            "source": "imported",
+        },
         identity("alice", day + "_follows"),
         skip=True,
     )

@@ -284,7 +284,7 @@ def test_missing_selected_provider_key_is_explicit(provider, key_name):
         assert r.status_code == 503 and key_name in r.json()["detail"]
 
 
-def test_import_validates_duplicates_and_preserves_user_edits(env):
+def test_import_validates_duplicates_and_preserves_original_metrics(env):
     c, db, g = env
     csv = "date,views,viewers,interactions,visits,follows,link_clicks\n2026-10-01,100,20,10,5,,0\n"
     r = c.post("/api/data/import", json={"csv_text": csv})
@@ -292,10 +292,10 @@ def test_import_validates_duplicates_and_preserves_user_edits(env):
     assert r.json()["missing_count"] == 1
     row = c.get("/api/data?metric=views").json()[0]
     assert (
-        c.put("/api/data/" + row["id"], json={"value": 999, "memo": "내 수정"}).status_code == 200
+        c.put("/api/data/" + row["id"], json={"value": 999, "memo": "내 수정"}).status_code == 403
     )
     assert c.post("/api/data/import", json={"csv_text": csv}).json()["skipped"] == 6
-    assert c.get("/api/data?metric=views").json()[0]["value"] == 999
+    assert c.get("/api/data?metric=views").json()[0]["value"] == 100
     assert c.post("/api/data/import", json={"csv_text": "bad"}).status_code == 422
 
 

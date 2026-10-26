@@ -37,7 +37,10 @@ try {
     .waitFor();
   await page.locator(".growth-idea-source a").first().waitFor();
   await page.getByText(/캡션 일부 참고 · 성과 수치 미포함/).waitFor();
-  assert.match(await page.locator("#growth-metrics").innerText(), /0건도 포함/);
+  assert.doesNotMatch(
+    await page.locator("#growth-metrics").innerText(),
+    /0건도 포함/,
+  );
   await page.reload();
   await page
     .getByRole("heading", {
@@ -86,6 +89,7 @@ try {
     fullPage: true,
   });
   await page.getByRole("button", { name: "지난 게시", exact: true }).click();
+  await page.locator(".growth-experiments-panel > summary").click();
   await page
     .locator("#growth-experiments select")
     .first()
@@ -98,15 +102,14 @@ try {
     .getByText(/계획과 다른 시간/)
     .first()
     .waitFor();
+  await page.locator(".growth-experiments-panel > summary").click();
   await page.screenshot({
     path: "test-results/growth-posts.png",
-    fullPage: true,
+    fullPage: false,
   });
   await page.getByRole("button", { name: "내 데이터", exact: true }).click();
   await page
-    .getByText("Instagram 자료는 Buffer에서 자동으로 가져와요.", {
-      exact: true,
-    })
+    .getByRole("heading", { name: "최근 게시물", exact: true })
     .waitFor();
   assert.equal(await page.locator("#growth-csv-form").isVisible(), false);
   await page
@@ -115,7 +118,8 @@ try {
   await page
     .getByText("Buffer에서 최신 자료를 다시 가져왔어요.", { exact: true })
     .waitFor();
-  await page.getByRole("button", { name: "＋ 기록 추가", exact: true }).click();
+  await page.locator("#data-archive-label").click();
+  await page.getByRole("button", { name: "＋ 직접 기록", exact: true }).click();
   await page.locator("#data-date").fill("2026-10-22");
   await page.locator("#data-value").fill("42");
   await page.locator("#data-memo").fill("성장 비서 CRUD 합성 검증");
@@ -123,7 +127,7 @@ try {
   await page.getByText("성장 비서 CRUD 합성 검증", { exact: true }).waitFor();
   await page.screenshot({
     path: "test-results/growth-data.png",
-    fullPage: true,
+    fullPage: false,
   });
   await page.getByRole("button", { name: "대화 기록", exact: true }).click();
   await page

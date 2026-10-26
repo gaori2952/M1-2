@@ -103,6 +103,89 @@ async function check(name, fn) {
 }
 try {
   await check(
+    "data view prioritizes current Buffer posts and locks imported rows",
+    async () => {
+      const page = await fixture(async (r, p) => {
+        if (p === "/api/buffer/posts") {
+          await r.fulfill({
+            json: {
+              items: [
+                {
+                  ...item("LATEST-POST"),
+                  sent_at: "2026-10-25T10:00:00Z",
+                  metrics: { follows: 3, reach: 100 },
+                },
+              ],
+              total: 1,
+              next_offset: null,
+            },
+          });
+          return true;
+        }
+        if (p === "/api/data") {
+          await r.fulfill({
+            json: [
+              {
+                id: "archive",
+                date: "2026-10-14",
+                metric: "views",
+                value: 100,
+                memo: "M1-1 CSV 가져오기",
+                editable: false,
+              },
+              {
+                id: "manual",
+                date: "2026-10-13",
+                metric: "views",
+                value: 4,
+                memo: "MY-NOTE",
+                editable: true,
+              },
+            ],
+          });
+          return true;
+        }
+      });
+      await page.goto("http://127.0.0.1:18101");
+      await page.getByText("PRIVATE-ACCOUNT", { exact: true }).waitFor();
+      await page
+        .getByRole("button", { name: "내 데이터", exact: true })
+        .click();
+      await page
+        .locator("#growth-live-data")
+        .getByText("LATEST-POST", { exact: true })
+        .waitFor();
+      assert.equal(await page.locator("#data-list").isVisible(), false);
+      assert.equal(await page.locator("#export-data").count(), 0);
+      await page.locator("#data-archive-label").click();
+      await page
+        .locator("#data-list")
+        .getByText("2026-10-14", { exact: true })
+        .waitFor();
+      assert.equal(await page.locator("#data-list button").count(), 0);
+      await page.locator("#data-source-filter").selectOption("manual");
+      await page
+        .locator("#data-list")
+        .getByText("MY-NOTE", { exact: true })
+        .waitFor();
+      assert.equal(await page.locator("#data-list button").count(), 2);
+      await page
+        .getByRole("button", { name: "지난 게시", exact: true })
+        .click();
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await page.getByRole("button", { name: "로그아웃", exact: true }).click();
+      assert.equal(await page.locator("#growth-live-data").innerText(), "");
+      assert.equal(await page.locator("#data-archive-period").innerText(), "");
+      await page.close();
+    },
+  );
+  await check(
     "manual refresh fetches source and separates archive freshness",
     async () => {
       let syncBody;
@@ -307,7 +390,7 @@ try {
       .getByRole("button", { name: "메모 저장", exact: true })
       .nth(1)
       .click();
-    await page.getByText(/메모와 수동 값을 저장했어요/).waitFor();
+    await page.getByText("메모를 저장했어요.", { exact: true }).waitFor();
     assert.equal(
       await page.locator(".growth-post textarea").nth(0).inputValue(),
       "keep my unsaved A",

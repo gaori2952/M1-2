@@ -400,123 +400,146 @@
         </div>
       </section>
       <section id="view-data" class="view" hidden>
-        <div class="growth-nav-sub">
-          <button data-view="data" class="secondary">일별 데이터</button
-          ><button data-view="history" class="secondary">대화 기록</button>
-        </div>
-        <section class="card growth-data-source">
-          <h2>Instagram 자료는 Buffer에서 자동으로 가져와요.</h2>
-          <p>
-            게시물·캡션·게시 시각·성과를 새로 불러오기로 갱신해요. 파일을 등록할
-            필요가 없어요.
-          </p>
-          <button id="growth-data-sync" class="primary">
-            Buffer 자료 갱신
-          </button>
-          <p class="muted">
-            아래 일별 기록은 기존에 보관한 계정 자료예요. 게시물별 누적 성과와는
-            따로 관리해요.
-          </p>
-        </section>
-        <details class="growth-csv-optional">
-          <summary>이전 일별 자료 추가 (선택)</summary>
-          <form id="growth-csv-form" class="card growth-csv">
-            <h2>과거 자료를 보완할 때만 사용해요.</h2>
-            <p>
-              date, views, viewers, interactions, visits, follows, link_clicks
-              열을 사용해요. 같은 날짜·지표는 기존 값을 유지하고, 빈 값은
-              결측으로 보관해요.
-            </p>
-            <label
-              >CSV 파일<input
-                id="growth-csv-file"
-                type="file"
-                accept=".csv,text/csv"
-                required /></label
-            ><button class="secondary">CSV 가져오기</button>
-            <p id="growth-csv-result" role="status"></p>
-          </form>
-        </details>
-        <div class="page-heading">
+        <header class="page-heading">
           <div>
-            <span class="eyebrow">ACCOUNT CONTEXT</span>
-            <h1>계정 데이터</h1>
-            <p>0과 결측값을 구분하고, 변화는 같은 길이의 기간으로 비교해요.</p>
+            <span class="eyebrow">DATA</span>
+            <h1>내 데이터</h1>
           </div>
           <div class="heading-actions">
-            <button id="export-data" class="secondary">JSON 내보내기 ↓</button
-            ><button id="data-new" class="primary">＋ 기록 추가</button>
+            <button data-view="history" class="text-button">대화 기록</button
+            ><button id="growth-data-sync" class="primary">
+              Buffer 자료 갱신
+            </button>
           </div>
-        </div>
-        <form id="filter-form" class="filter-bar">
-          <label>지표<select id="filter-metric"></select></label>
-          <div class="range-chips" role="group" aria-label="빠른 기간">
-            <button type="button" data-range="7">최근 7일</button
-            ><button type="button" data-range="30">30일</button
-            ><button type="button" data-range="90">90일</button
-            ><button type="button" data-range="all">전체</button>
+        </header>
+        <section class="card growth-data-source">
+          <div id="growth-data-status" class="growth-data-status"></div>
+          <div class="section-top">
+            <h2>최근 게시물</h2>
+            <button data-view="posts" class="text-button">
+              전체 게시물 보기 →
+            </button>
           </div>
-          <label>시작일<input id="filter-start" type="date" /></label
-          ><label>종료일<input id="filter-end" type="date" /></label
-          ><button class="secondary">기간 적용</button
-          ><button id="clear-filter" class="text-button" type="button">
-            초기화
-          </button>
-        </form>
-        <div id="data-summary" class="stats-row"></div>
-        <div class="workspace">
-          <form id="data-form" class="card editor-panel" hidden>
-            <div class="section-top">
-              <h2 id="data-form-title">기록 추가</h2>
-              <button id="data-close" type="button" class="text-button">
-                닫기 ✕
-              </button>
-            </div>
-            <input id="data-id" type="hidden" /><label
-              >날짜<input id="data-date" type="date" required /></label
-            ><label>지표<select id="data-metric"></select></label
-            ><label
-              >값<input
-                id="data-value"
-                type="number"
-                min="0"
-                max="1000000000000"
-                step="1"
-                placeholder="빈칸은 결측값" /></label
-            ><label
-              >메모<textarea
-                id="data-memo"
-                maxlength="2000"
-                rows="3"
-              ></textarea>
-            </label>
-            <div class="actions">
-              <button class="primary">데이터 저장</button
-              ><button id="data-reset" type="button" class="secondary">
-                새 기록
-              </button>
-            </div>
-          </form>
-          <div class="card table-wrap">
-            <div class="section-top">
-              <h2>기록 목록</h2>
-              <span id="data-total" class="muted"></span>
-            </div>
+          <div class="growth-live-table">
             <table>
               <thead>
                 <tr>
-                  <th>날짜</th>
-                  <th>지표</th>
-                  <th>값</th>
-                  <th>메모</th>
-                  <th>관리</th>
+                  <th>게시일</th>
+                  <th>게시물</th>
+                  <th>팔로우</th>
+                  <th>도달</th>
+                  <th>조회</th>
                 </tr>
               </thead>
-              <tbody id="data-list"></tbody>
+              <tbody id="growth-live-data"></tbody>
             </table>
-            <button id="more-data" class="secondary" hidden>더 보기</button>
           </div>
-        </div>
+        </section>
+        <details id="data-archive" class="data-archive">
+          <summary id="data-archive-label">보관된 일별 기록</summary>
+          <p id="data-archive-period" class="muted"></p>
+          <details class="growth-csv-optional">
+            <summary>이전 일별 자료 추가 (선택)</summary>
+            <form id="growth-csv-form" class="card growth-csv">
+              <h2>과거 자료를 보완할 때만 사용해요.</h2>
+              <p>
+                date, views, viewers, interactions, visits, follows, link_clicks
+                열을 사용해요. 같은 날짜·지표는 기존 값을 유지하고, 빈 값은
+                결측으로 보관해요.
+              </p>
+              <label
+                >CSV 파일<input
+                  id="growth-csv-file"
+                  type="file"
+                  accept=".csv,text/csv"
+                  required /></label
+              ><button class="secondary">CSV 가져오기</button>
+              <p id="growth-csv-result" role="status"></p>
+            </form>
+          </details>
+          <div class="page-heading">
+            <div>
+              <h2>일별 기록 조회</h2>
+            </div>
+            <div class="heading-actions">
+              <button id="data-new" class="secondary">＋ 직접 기록</button>
+            </div>
+          </div>
+          <form id="filter-form" class="filter-bar">
+            <label
+              >자료<select id="data-source-filter">
+                <option value="imported">가져온 기록</option>
+                <option value="manual">직접 기록</option>
+              </select></label
+            ><label>지표<select id="filter-metric"></select></label>
+            <div class="range-chips" role="group" aria-label="빠른 기간">
+              <button type="button" data-range="7">최근 7일</button
+              ><button type="button" data-range="30">30일</button
+              ><button type="button" data-range="90">90일</button
+              ><button type="button" data-range="all">전체</button>
+            </div>
+            <label>시작일<input id="filter-start" type="date" /></label
+            ><label>종료일<input id="filter-end" type="date" /></label
+            ><button class="secondary">기간 적용</button
+            ><button id="clear-filter" class="text-button" type="button">
+              초기화
+            </button>
+          </form>
+          <div id="data-summary" class="stats-row" hidden></div>
+          <div class="workspace">
+            <form id="data-form" class="card editor-panel" hidden>
+              <div class="section-top">
+                <h2 id="data-form-title">기록 추가</h2>
+                <button id="data-close" type="button" class="text-button">
+                  닫기 ✕
+                </button>
+              </div>
+              <input id="data-id" type="hidden" /><label
+                >날짜<input id="data-date" type="date" required /></label
+              ><label>지표<select id="data-metric"></select></label
+              ><label
+                >값<input
+                  id="data-value"
+                  type="number"
+                  min="0"
+                  max="1000000000000"
+                  step="1"
+                  placeholder="빈칸은 결측값" /></label
+              ><label
+                >메모<textarea
+                  id="data-memo"
+                  maxlength="2000"
+                  rows="3"
+                ></textarea>
+              </label>
+              <div class="actions">
+                <button class="primary">데이터 저장</button
+                ><button id="data-reset" type="button" class="secondary">
+                  새 기록
+                </button>
+              </div>
+            </form>
+            <div class="card table-wrap">
+              <div class="section-top">
+                <h2>기록 목록</h2>
+                <span id="data-total" class="muted"></span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    <th>지표</th>
+                    <th>값</th>
+                    <th>메모</th>
+                    <th id="data-actions-heading" hidden>관리</th>
+                  </tr>
+                </thead>
+                <tbody id="data-list"></tbody>
+              </table>
+              <button id="more-data" class="secondary" hidden>더 보기</button>
+            </div>
+          </div>
+        </details>
       </section>
       <section id="view-history" class="view" hidden>
         <div class="page-heading">
