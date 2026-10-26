@@ -562,20 +562,6 @@
 .growth-csv p {
   font-size: 12px;
 }
-.legacy-tools {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.legacy-tools summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 12px;
-  padding: 12px 16px;
-}
-.legacy-tools button {
-  width: 100%;
-}
 .dark {
   --growth-accent: var(--ink);
   --growth-soft: var(--soft);
@@ -674,15 +660,6 @@
   .growth-chat-actions button {
     width: 100%;
   }
-  .sidebar nav .legacy-tools[open] {
-    display: block;
-  }
-  .legacy-tools {
-    margin-top: 0;
-  }
-  .legacy-tools summary {
-    padding: 10px 6px;
-  }
 }
 
 @media (max-width: 760px) {
@@ -706,10 +683,5 @@
   }
   .growth-post-section > .section-top {
     flex-wrap: wrap;
-  }
-  .sidebar nav .legacy-tools {
-    border: 0;
-    padding-top: 0;
-    margin-top: 0;
   }
 }

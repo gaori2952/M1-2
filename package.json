@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "node frontend/build-config.mjs",
-    "test:e2e": "node tests/e2e/flow.mjs",
+    "test:e2e": "node tests/e2e/growth.mjs",
     "format:check": "prettier --check frontend/*.js frontend/*.mjs frontend/*.html frontend/*.css tests/e2e/*.mjs",
     "test:build": "node --test tests/build.test.mjs",
     "test:durability": "node tests/e2e/durability.mjs",
