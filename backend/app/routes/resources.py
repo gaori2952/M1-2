@@ -6,7 +6,7 @@ from .. import repository as repo
 from ..analytics import summarize
 from ..auth import require_owner
 from ..growth_models import CsvInput
-from ..importing import parse_daily_csv
+from ..importing import imported_record, parse_daily_csv
 from ..models import (
     ContentInput,
     ConversationInput,
@@ -37,7 +37,7 @@ def list_data(
         summarize([], start, end)
     return sorted(
         [
-            r
+            r | {"editable": not imported_record(r)}
             for r in records
             if (not start or r["date"] >= str(start))
             and (not end or r["date"] <= str(end))
@@ -63,7 +63,7 @@ def add_data(body: MetricInput, uid=Depends(require_owner), db=Depends(store)):
         db,
         "data",
         uid,
-        body.model_dump(mode="json"),
+        body.model_dump(mode="json") | {"source": "manual"},
         repo.identity(uid, str(body.date) + "_" + body.metric),
     )
 
@@ -95,7 +95,13 @@ def import_data(body: CsvInput, uid=Depends(require_owner), db=Depends(store)):
                 "data",
                 key,
                 row
-                | {"id": key, "owner_uid": uid, "created_at": repo.now(), "updated_at": repo.now()},
+                | {
+                    "id": key,
+                    "owner_uid": uid,
+                    "source": "imported",
+                    "created_at": repo.now(),
+                    "updated_at": repo.now(),
+                },
             )
             return True
 
@@ -114,11 +120,15 @@ def import_data(body: CsvInput, uid=Depends(require_owner), db=Depends(store)):
 
 @router.put("/data/{key}")
 def edit_data(key: str, body: MetricUpdate, uid=Depends(require_owner), db=Depends(store)):
+    if imported_record(repo.owned(db, "data", key, uid)):
+        raise HTTPException(403, "가져온 원본 자료는 수정할 수 없습니다.")
     return repo.update(db, "data", uid, key, body.model_dump())
 
 
 @router.delete("/data/{key}", status_code=204)
 def delete_data(key: str, uid=Depends(require_owner), db=Depends(store)):
+    if imported_record(repo.owned(db, "data", key, uid)):
+        raise HTTPException(403, "가져온 원본 자료는 삭제할 수 없습니다.")
     repo.remove(db, "data", uid, key)
 
 

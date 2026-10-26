@@ -6,7 +6,7 @@ const names = {
 };
 const num = (v) =>
   v === null || v === undefined
-    ? "자료 없음"
+    ? "—"
     : Number(v).toLocaleString("ko-KR", { maximumFractionDigits: 2 });
 const node = (tag, text, cls) => {
   const n = document.createElement(tag);
@@ -43,13 +43,13 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
   root.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">YOUR NEXT POST</span><h1>다음 게시, 팔로워로 이어지게.</h1><p>무슨 콘텐츠를 왜 올릴지, 내 게시물과 연결해 제안해요.</p></div><button id="growth-sync" class="primary">Buffer 새로 불러오기</button></header>
  <div class="growth-connection"><strong id="growth-account">내 계정 연결</strong><dl class="growth-freshness"><div><dt>마지막으로 가져온 시각</dt><dd id="growth-sync-state">로그인 후 확인할 수 있어요.</dd></div><div><dt>최신 게시일</dt><dd id="growth-source-state">—</dd></div><div><dt>성과가 갱신된 시각</dt><dd id="growth-metric-state">—</dd></div></dl><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div><p id="growth-freshness-note" class="growth-source-note">새로 불러오기는 Buffer 원본을 다시 조회해요. 게시물 성과는 원본 서비스보다 늦게 반영될 수 있어요.</p>
  <section class="growth-metrics" id="growth-metrics"><article><span>수집 게시물</span><strong>—</strong></article><article><span>팔로우 지표 제공 게시물</span><strong>—</strong></article><article><span>카드뉴스 팔로우 전환 중앙값</span><strong>—</strong></article></section>
- <section class="card growth-chat"><div class="section-top"><div><span class="eyebrow">01 · CONTENT</span><h2>다음에 어떤 콘텐츠를 올릴까요?</h2><p id="growth-gpt-state" class="muted">데이터 요약과 관련 게시물을 바탕으로 답해요.</p></div><button id="growth-new-chat" class="secondary">새 성장 대화</button></div><div class="growth-content-options"><label>만들고 싶은 형식<select id="growth-format"><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label><label>관심 주제 (선택)<input id="growth-topic" maxlength="300" placeholder="비워두면 기존 게시물에서 제안해요" /></label></div><p class="muted">주제를 정하지 않아도 물어보세요. 추천 제목·구성·내 게시물에서 찾은 이유를 함께 보여줘요.</p><div id="growth-messages" aria-live="polite"></div><p id="growth-loading" role="status" hidden>내 자료를 확인하며 답변을 준비하고 있어요…</p><form id="growth-chat-form"><label>질문<textarea id="growth-question" maxlength="4000" rows="2" placeholder="내 최근 게시물을 보고, 다음 콘텐츠 3개와 각각의 추천 이유를 알려줘." required></textarea></label><div class="growth-chat-actions"><button id="growth-chat-send" class="primary">AI에게 물어보기</button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-history-open" type="button" class="text-button">대화 기록</button></div></form></section>
+ <section class="card growth-chat"><div class="section-top"><div><span class="eyebrow">01 · CONTENT</span><h2>다음에 어떤 콘텐츠를 올릴까요?</h2><p id="growth-gpt-state" class="muted">데이터 요약과 관련 게시물을 바탕으로 답해요.</p></div><button id="growth-new-chat" class="secondary">새 성장 대화</button></div><div class="growth-content-options"><label>만들고 싶은 형식<select id="growth-format"><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label><label>관심 주제 (선택)<input id="growth-topic" maxlength="300" placeholder="비워두면 기존 게시물에서 제안해요" /></label></div><div id="growth-messages" aria-live="polite"></div><p id="growth-loading" role="status" hidden>내 자료를 확인하며 답변을 준비하고 있어요…</p><form id="growth-chat-form"><label>질문<textarea id="growth-question" maxlength="4000" rows="2" placeholder="내 최근 게시물을 보고, 다음 콘텐츠 3개와 각각의 추천 이유를 알려줘." required></textarea></label><div class="growth-chat-actions"><button id="growth-chat-send" class="primary">AI에게 물어보기</button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-history-open" type="button" class="text-button">대화 기록</button></div></form></section>
  <details id="growth-timing" class="growth-timing"><summary>게시 시간 비교 (선택)</summary><p class="muted">콘텐츠를 정한 뒤, 내가 올릴 수 있는 시간끼리 비교해요. 콘텐츠 주제 추천과는 별도예요.</p><div class="growth-workspace"><section class="card growth-planner"><span class="eyebrow">시간 비교</span><h2>언제 올릴지 비교하기</h2><label>비교 기준<select id="growth-observation"><option value="lifetime">현재 누적 성과 · 탐색용</option><option value="seven_day">실제 7일차 부근 관측</option></select></label><label>내가 올릴 수 있는 시간<input id="growth-slot" type="datetime-local" /></label><small id="growth-timezone">계정 시간대: Asia/Seoul · 입력은 내 기기 시간 기준</small><button id="growth-add-slot" class="secondary">가능한 시간 추가</button><div id="growth-slots" class="growth-slots"></div><details><summary>Buffer에 설정된 일정 확인</summary><div id="growth-schedule" class="growth-slots"></div><small>눌러 추가한 시간만 추천 후보에 포함해요.</small></details><button id="growth-preview" class="primary">시간 후보 확인</button><p class="muted">통계와 후보 확인에는 AI를 호출하지 않아요.</p></section>
  <section class="card growth-advice"><span class="eyebrow">후보와 이유</span><h2>왜 이 시간인가요?</h2><div id="growth-recommendation"><p class="growth-empty">가능한 시간을 고르면 내 기록과 비교한 후보가 여기에 표시돼요.</p></div><div id="growth-evidence"></div><details class="growth-limitations"><summary>이 추천이 알 수 있는 범위</summary><p>팔로우 지표가 없는 게시물은 성장 효과를 판단하지 않아요. 누적 성과는 게시 후 경과 시간이 달라요. 시간별 차이가 원인을 증명하거나 팔로워 증가를 보장하지는 않아요.</p></details></section></div>
 </details>
-  <details class="card growth-daily"><summary id="growth-daily-label">과거 계정 일별 기록</summary><div class="section-top"><div><h2>보관된 일별 팔로우</h2><p id="growth-daily-summary" class="muted">저장된 일별 데이터의 기간·개수·추세를 표시해요.</p></div><button id="growth-data-open" class="text-button">데이터 관리 →</button></div><div id="growth-chart"></div><p id="growth-daily-freshness" class="growth-source-note"></p><small>이 자료는 과거에 보관한 계정 일별 기록이에요. Buffer API가 계정 일별 팔로워 통계를 제공하지 않아 새로 불러오기로 갱신되지 않아요. 비어 있는 날짜를 0이나 추정값으로 채우지 않아요.</small></details>
+  <details class="card growth-daily"><summary id="growth-daily-label">과거 계정 일별 기록</summary><div class="section-top"><div><h2>보관된 일별 팔로우</h2><p id="growth-daily-summary" class="muted">저장된 일별 데이터의 기간·개수·추세를 표시해요.</p></div><button id="growth-data-open" class="text-button">데이터 관리 →</button></div><div id="growth-chart"></div><p id="growth-daily-freshness" hidden></p><small>M1-1에서 가져온 일별 기록이에요.</small></details>
 `;
-  past.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">LEARN FROM YOUR POSTS</span><h1>지난 게시에서 다음 힌트를.</h1><p>팔로우 성과와 자료가 없는 부분을 함께 확인하세요.</p></div></header><section class="card"><span class="eyebrow">MY EXPERIMENTS</span><h2>내 게시 실험</h2><div id="growth-experiments"></div></section><section class="card"><div class="section-top"><h2>불러온 게시물</h2><label>형식 필터<select id="growth-post-filter"><option value="">전체 형식</option><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label></div><p id="growth-post-count" class="muted"></p><div id="growth-post-list" class="growth-post-grid"></div><button id="growth-more-posts" class="secondary" hidden>게시물 더 보기</button></section>`;
+  past.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">LEARN FROM YOUR POSTS</span><h1>지난 게시</h1></div></header><details class="growth-experiments-panel"><summary>게시 실험</summary><div id="growth-experiments"></div></details><section class="growth-post-section"><div class="section-top"><h2>불러온 게시물</h2><label>형식 필터<select id="growth-post-filter"><option value="">전체 형식</option><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label></div><p id="growth-post-count" class="muted"></p><div id="growth-post-list" class="growth-post-grid"></div><button id="growth-more-posts" class="secondary" hidden>게시물 더 보기</button></section>`;
   const $ = (s) => document.querySelector(s);
   let epoch = 0,
     user = null,
@@ -195,22 +195,14 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       s?.channel?.name || "Buffer 계정을 연결해 주세요";
     $("#growth-sync-state").textContent = s?.last_success_at
       ? `가져옴 ${time(s.last_success_at)}${s.last_error ? ` · 최근 시도 실패 (${s.last_error}) · 이전 자료 표시 중` : ""}`
-      : "첫 동기화를 시작해 주세요. 키·소유 UID·채널은 서버 환경 변수로 설정해요.";
+      : "Buffer 자료를 불러와 주세요.";
     $("#growth-source-state").textContent = time(s?.period?.end);
     $("#growth-metric-state").textContent = s?.latest_metrics_at
       ? `${time(s.latest_metrics_at)} (가장 최근)`
       : "Buffer에서 갱신 시각을 제공하지 않았어요";
-    $("#growth-freshness-note").textContent = [
-      "새로 불러오기는 Buffer 원본을 다시 조회해요. 성과 수치는 Buffer에서 하루 단위로 수집해 최대 약 24시간 늦을 수 있어요.",
-      s?.oldest_metrics_at
-        ? `게시물별 성과 갱신 범위: ${time(s.oldest_metrics_at)} ~ ${time(s.latest_metrics_at)}.`
-        : "",
-      s?.metrics_missing_count
-        ? `성과 갱신 시각 미제공 ${num(s.metrics_missing_count)}개.`
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    $("#growth-freshness-note").textContent = s?.oldest_metrics_at
+      ? `게시물별 성과 갱신: ${time(s.oldest_metrics_at)} ~ ${time(s.latest_metrics_at)}`
+      : "";
     $("#growth-gpt-state").textContent = s?.chat_configured
       ? `${s.assistant_provider === "anthropic" ? "Claude" : "GPT"}가 데이터 요약과 관련 게시물을 바탕으로 답해요.`
       : "설정한 AI의 API 키를 확인해 주세요. 통계·시간 후보·실험 저장은 먼저 사용할 수 있어요.";
@@ -222,14 +214,14 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       [
         "팔로우 지표 제공 게시물",
         s?.follows_count ?? 0,
-        "API가 숫자를 제공한 게시물 · 0건도 포함 · 성공한 게시물 수가 아니에요",
+        "팔로우 수치 수집된 게시물",
       ],
       [
         "카드뉴스 팔로우 전환 중앙값",
         summary?.formats?.carousel?.median_conversion === null
-          ? "자료 없음"
+          ? "—"
           : `${num(summary?.formats?.carousel?.median_conversion)}%`,
-        "게시물별 (팔로우 ÷ 도달 × 100)의 중앙값 · 누적 지표 기준",
+        "팔로우 ÷ 도달",
       ],
     ];
     $("#growth-metrics").replaceChildren(
@@ -243,6 +235,17 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
         return a;
       }),
     );
+    const source = $("#growth-data-status");
+    source.replaceChildren();
+    for (const [label, value] of [
+      ["게시물", `${num(s?.count)}개`],
+      ["최근 조회", time(s?.last_success_at)],
+      ["최신 게시", time(s?.period?.end)],
+    ]) {
+      const item = node("div");
+      item.append(node("span", label), node("strong", value));
+      source.append(item);
+    }
     const schedule = $("#growth-schedule");
     schedule.replaceChildren();
     const days = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 0 };
@@ -286,6 +289,27 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
           "muted",
         ),
       );
+  }
+  function renderLiveData(items) {
+    const rows = items.map((p) => {
+      const row = node("tr");
+      const caption = node("td");
+      caption.append(
+        link(p.text.slice(0, 100) || "게시물 보기", p.external_link),
+      );
+      row.append(node("td", time(p.sent_at)), caption);
+      for (const key of ["follows", "reach", "views"])
+        row.append(node("td", num(p.metrics[key])));
+      return row;
+    });
+    if (!rows.length) {
+      const row = node("tr"),
+        cell = node("td", "불러온 게시물이 없어요.");
+      cell.colSpan = 5;
+      row.append(cell);
+      rows.push(row);
+    }
+    $("#growth-live-data").replaceChildren(...rows);
   }
   function renderDaily(records, summary) {
     const values = records
@@ -402,42 +426,54 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       annotation: annotationDrafts.get(original.id) || original.annotation,
     };
     const card = node("article", undefined, "growth-post card");
-    card.append(
-      node("span", `${names[p.format] || p.format} · ${p.status}`, "tag"),
-      node("h3", p.text.slice(0, 110) || "캡션 없는 게시물"),
-      node(
-        "small",
-        `${time(p.sent_at)} · 지표 갱신 ${time(p.metrics_updated_at)}`,
-      ),
+    const media = node("div", names[p.format] || "게시물", "growth-post-media");
+    const asset = p.assets?.find(
+      (a) => a.thumbnail || a.mime_type?.startsWith("image/"),
     );
+    const imageUrl = asset?.thumbnail || asset?.source;
+    if (imageUrl) {
+      const image = node("img");
+      image.src = imageUrl;
+      image.alt = "";
+      image.loading = "lazy";
+      image.referrerPolicy = "no-referrer";
+      image.onerror = () => image.remove();
+      media.append(image);
+    }
+    const content = node("div", undefined, "growth-post-content");
+    const header = node("header", undefined, "growth-post-header");
+    header.append(
+      node("span", names[p.format] || "게시물", "tag"),
+      node("time", time(p.sent_at)),
+    );
+    content.append(header, node("h3", p.text || "캡션 없는 게시물"));
     const metrics = node("div", undefined, "growth-post-metrics");
-    for (const [k, label] of [
+    for (const [key, label] of [
       ["follows", "팔로우"],
       ["reach", "도달"],
       ["views", "조회"],
       ["saves", "저장"],
       ["shares", "공유"],
     ]) {
-      const d = node("div");
-      d.append(node("span", label), node("strong", num(p.metrics[k])));
-      metrics.append(d);
+      const metric = node("div");
+      metric.append(node("span", label), node("strong", num(p.metrics[key])));
+      metrics.append(metric);
     }
-    card.append(metrics, link("Instagram에서 보기 ↗", p.external_link));
-    const details = node("details");
-    details.append(node("summary", "주제·메모·수동 보완"));
+    const footer = node("div", undefined, "growth-post-footer");
+    footer.append(
+      link("Instagram에서 보기 ↗", p.external_link),
+      node("small", `성과 갱신 ${time(p.metrics_updated_at)}`),
+    );
+    const details = node("details", undefined, "growth-post-note");
+    details.append(node("summary", "메모"));
     details.open = annotationDrafts.has(p.id);
     const tags = node("input");
-    tags.placeholder = "주제 태그 (쉼표 구분)";
+    tags.placeholder = "쉼표로 구분";
     tags.value = (p.annotation?.tags || []).join(", ");
     const memo = node("textarea");
-    memo.placeholder = "다음에 참고할 메모";
     memo.maxLength = 2000;
+    memo.rows = 2;
     memo.value = p.annotation?.memo || "";
-    const follows = node("input");
-    follows.type = "number";
-    follows.min = "0";
-    follows.placeholder = "수동 팔로우 수 · 원본과 분리";
-    follows.value = p.annotation?.manual_follows ?? "";
     const captureDraft = () =>
       annotationDrafts.set(p.id, {
         ...p.annotation,
@@ -446,18 +482,16 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
           .map((s) => s.trim())
           .filter(Boolean),
         memo: memo.value,
-        manual_follows: follows.value === "" ? null : Number(follows.value),
       });
-    for (const input of [tags, memo, follows])
+    for (const input of [tags, memo])
       input.addEventListener("input", captureDraft);
     for (const [label, input] of [
-      ["주제 태그", tags],
+      ["분류 태그", tags],
       ["메모", memo],
-      ["수동 팔로우", follows],
     ]) {
-      const l = node("label", label);
-      l.append(input);
-      details.append(l);
+      const field = node("label", label);
+      field.append(input);
+      details.append(field);
     }
     details.append(
       action("메모 저장", async () => {
@@ -466,34 +500,32 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
           {
             method: "PUT",
             body: {
-              ...{
-                tags: tags.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-                memo: memo.value,
-                manual_follows:
-                  follows.value === "" ? null : Number(follows.value),
-              },
+              tags: tags.value
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+              memo: memo.value,
+              manual_follows: p.annotation?.manual_follows ?? null,
             },
           },
         );
-        notice("메모와 수동 값을 저장했어요. Buffer 원본 수치는 유지돼요.");
+        notice("메모를 저장했어요.");
         annotationDrafts.delete(p.id);
         await loadPosts(true);
       }),
     );
-    card.append(details);
+    content.append(metrics, footer, details);
+    card.append(media, content);
     return card;
   }
   async function loadPosts(reset = true) {
     const data = await request(
-      `/api/buffer/posts?limit=30&offset=${reset ? 0 : nextOffset || 0}${$("#growth-post-filter").value ? `&format=${$("#growth-post-filter").value}` : ""}`,
+      `/api/buffer/posts?status=sent&limit=30&offset=${reset ? 0 : nextOffset || 0}${$("#growth-post-filter").value ? `&format=${$("#growth-post-filter").value}` : ""}`,
     );
     posts = reset ? data.items : [...posts, ...data.items];
     nextOffset = data.next_offset;
     $("#growth-post-count").textContent =
-      `${data.total}개 중 ${posts.length}개 표시 · 팔로우 자료 없음은 0이 아니에요.`;
+      `${data.total}개 게시물 · ${posts.length}개 표시`;
     $("#growth-post-list").replaceChildren(...posts.map(postCard));
     $("#growth-more-posts").hidden = nextOffset === null;
   }
@@ -586,6 +618,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       request("/api/growth/summary"),
       request("/api/data?metric=follows"),
       request("/api/data/summary"),
+      request("/api/buffer/posts?status=sent&limit=10"),
     ]);
     if (!same(refreshEpoch)) return;
     if (results[0].status === "fulfilled") {
@@ -600,6 +633,12 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       $("#growth-gpt-state").textContent =
         "Buffer 서버 설정을 먼저 확인하세요.";
     }
+    if (results[4].status === "fulfilled")
+      renderLiveData(results[4].value.items);
+    else
+      $("#growth-live-data").replaceChildren(
+        node("tr", "게시물 조회에 실패했어요. 다시 갱신해 주세요."),
+      );
     if (results[2].status === "fulfilled")
       renderDaily(
         results[2].value,
@@ -821,6 +860,8 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       "growth-chart",
       "growth-slots",
       "growth-schedule",
+      "growth-live-data",
+      "growth-data-status",
     ])
       $("#" + id).replaceChildren();
     $("#growth-topic").value = "";

@@ -175,6 +175,7 @@ function show(view) {
   document
     .querySelectorAll("nav button")
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  window.scrollTo({ top: 0, behavior: "instant" });
   if (view === "history") run(loadHistory);
   if (view === "drafts" || view === "studio") run(loadDrafts);
 }
@@ -309,7 +310,7 @@ async function loadSummary() {
     );
     poly.setAttribute("points", segment.join(" "));
     poly.setAttribute("fill", "none");
-    poly.setAttribute("stroke", "#2563eb");
+    poly.setAttribute("stroke", "currentColor");
     poly.setAttribute("stroke-width", "2.5");
     $("#trend-chart").append(poly);
     segment.length = 0;
@@ -329,10 +330,7 @@ async function loadSummary() {
   for (const [name, value] of [
     [`${labels[metric]} 평균`, number(v.average)],
     ["최고", number(v.max)],
-    [
-      "선택 지표의 일별 기록",
-      `기록 ${v.count || 0}일 · 없음 ${v.missing_count || 0}일`,
-    ],
+    ["선택 지표의 일별 기록", `${v.count || 0}일`],
     [
       "전기 대비 평균 변화",
       v.change_percent === null || v.change_percent === undefined
@@ -587,6 +585,8 @@ function openDataForm(title) {
   $("#data-form").hidden = false;
 }
 $("#data-new").onclick = () => {
+  $("#data-source-filter").value = "manual";
+  renderData();
   resetData();
   $("#data-date").value = new Date().toISOString().slice(0, 10);
   $("#data-metric").value = $("#filter-metric").value;
@@ -625,10 +625,20 @@ document.querySelectorAll("[data-range]").forEach((b) =>
     }, b),
   ),
 );
+function editableData(d) {
+  return (
+    d.editable ?? (d.source !== "imported" && d.memo !== "M1-1 CSV 가져오기")
+  );
+}
+$("#data-source-filter").onchange = renderData;
 function renderData() {
   $("#data-list").replaceChildren();
+  $("#data-actions-heading").hidden =
+    $("#data-source-filter").value !== "manual";
   const filtered = state.data.filter(
-    (d) => d.metric === $("#filter-metric").value,
+    (d) =>
+      d.metric === $("#filter-metric").value &&
+      editableData(d) === ($("#data-source-filter").value === "manual"),
   );
   $("#data-total").textContent = `${filtered.length}개 기록`;
   $("#more-data").hidden = filtered.length <= state.limit;
@@ -642,25 +652,26 @@ function renderData() {
     ])
       tr.append(el("td", value));
     const actions = el("td");
-    actions.append(
-      button("수정", () => {
-        $("#data-id").value = d.id;
-        $("#data-date").value = d.date;
-        $("#data-date").disabled = true;
-        $("#data-metric").value = d.metric;
-        $("#data-metric").disabled = true;
-        $("#data-value").value = d.value ?? "";
-        $("#data-memo").value = d.memo;
-        openDataForm(`기록 수정 · ${d.date}`);
-      }),
-      button("삭제", async () => {
-        if (!confirm("이 데이터 기록을 삭제할까요?")) return;
-        await api("/api/data/" + d.id, { method: "DELETE" });
-        await loadData();
-        notice("데이터를 삭제했어요.");
-      }),
-    );
-    tr.append(actions);
+    if (editableData(d))
+      actions.append(
+        button("수정", () => {
+          $("#data-id").value = d.id;
+          $("#data-date").value = d.date;
+          $("#data-date").disabled = true;
+          $("#data-metric").value = d.metric;
+          $("#data-metric").disabled = true;
+          $("#data-value").value = d.value ?? "";
+          $("#data-memo").value = d.memo;
+          openDataForm(`기록 수정 · ${d.date}`);
+        }),
+        button("삭제", async () => {
+          if (!confirm("이 데이터 기록을 삭제할까요?")) return;
+          await api("/api/data/" + d.id, { method: "DELETE" });
+          await loadData();
+          notice("데이터를 삭제했어요.");
+        }),
+      );
+    if (editableData(d)) tr.append(actions);
     $("#data-list").append(tr);
   }
   if (!filtered.length) {
@@ -678,6 +689,14 @@ async function loadData() {
       (a, d) => (d.date > a ? d.date : a),
       "",
     );
+  const archived = state.data.filter((d) => !editableData(d));
+  const dates = archived.map((d) => d.date).sort();
+  $("#data-archive-label").textContent = dates.length
+    ? `보관된 일별 기록 · ${dates.at(-1)}까지`
+    : "보관된 일별 기록 / 직접 기록";
+  $("#data-archive-period").textContent = dates.length
+    ? `M1-1에서 가져온 기록 · ${dates[0]} ~ ${dates.at(-1)}`
+    : "";
   renderData();
   await loadSummary();
 }
@@ -734,7 +753,6 @@ function download(name, data, type = "application/json") {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-$("#export-data").onclick = () => download("account-data.json", state.data);
 const prefGroups = {
   독자: ["중학생", "고등학생", "공학 입문 대학생", "일반 성인", "전공자"],
   "설명 순서": [
@@ -1365,6 +1383,12 @@ async function session(user) {
     await growthReady;
     state.contents = [];
     state.data = [];
+    state.latestDate = null;
+    $("#data-archive-label").textContent = "보관된 일별 기록";
+    $("#data-archive-period").textContent = "";
+    $("#data-archive").open = false;
+    $("#data-source-filter").value = "imported";
+    $("#data-form").hidden = true;
     state.series = [];
     state.conversationId = null;
     state.draft = null;

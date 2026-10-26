@@ -80,6 +80,33 @@ def test_crud_isolated_duplicate_and_summary_updates(env):
     assert c.get("/api/data", headers=auth()).json() == []
 
 
+def test_imported_metrics_are_read_only_including_legacy_csv_records(env):
+    c, db = env
+    header = "date,views,viewers,interactions,visits,follows,link_clicks\n"
+    assert (
+        c.post(
+            "/api/data/import",
+            json={"csv_text": header + "2026-10-14,10,0,2,1,3,0\n"},
+            headers=auth(),
+        ).status_code
+        == 200
+    )
+    records = c.get("/api/data", headers=auth()).json()
+    row = next(r for r in records if r["metric"] == "views")
+    assert row["editable"] is False
+    assert (
+        c.put("/api/data/" + row["id"], json={"value": 999, "memo": ""}, headers=auth()).status_code
+        == 403
+    )
+    assert c.delete("/api/data/" + row["id"], headers=auth()).status_code == 403
+    assert db.get("data", row["id"])["value"] == 10
+    legacy = db.get("data", row["id"])
+    legacy.pop("source", None)
+    db.set("data", row["id"], legacy)
+    assert c.get("/api/data", headers=auth()).json()[0]["editable"] is False
+    assert c.delete("/api/data/" + row["id"], headers=auth()).status_code == 403
+
+
 def test_calendar_comparison_preserves_missing_and_zero():
     records = [
         {"date": "2026-10-01", "metric": "views", "value": 0},
@@ -187,9 +214,15 @@ def test_reimport_does_not_overwrite_user_edits(env):
 
     c, db = env
     rows = [{"date": "2026-10-01", "metric": "views", "value": 10, "memo": "import"}]
-    import_records(db, "alice", rows)
     key = identity("alice", "2026-10-01_views")
-    c.put("/api/data/" + key, headers=auth(), json={"value": 99, "memo": "my edit"})
+    assert (
+        c.post(
+            "/api/data",
+            headers=auth(),
+            json={"date": "2026-10-01", "metric": "views", "value": 99, "memo": "my edit"},
+        ).status_code
+        == 201
+    )
     import_records(db, "alice", rows)
     assert len(db.list("data", "alice")) == 1
     assert db.get("data", key)["value"] == 99
