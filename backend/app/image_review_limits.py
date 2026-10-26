@@ -8,7 +8,9 @@ class ImageReviewBodyLimit:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or not scope["path"].startswith("/api/image-reviews"):
+        if scope["type"] != "http" or not (
+            scope["path"].startswith("/api/image-reviews") or scope["path"] == "/api/chat"
+        ):
             return await self.app(scope, receive, send)
         body = bytearray()
         while True:

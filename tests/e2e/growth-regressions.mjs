@@ -139,6 +139,7 @@ try {
         }
       });
       await page.goto("http://127.0.0.1:18101");
+      await page.locator(".growth-account-details > summary").click();
       await page
         .locator("#growth-sync-state")
         .getByText(message, { exact: true })
@@ -273,6 +274,7 @@ try {
         .getByText("Buffer에서 최신 자료를 다시 가져왔어요.", { exact: true })
         .waitFor();
       assert.equal(syncBody.force, true);
+      await page.locator(".growth-account-details > summary").click();
       assert.match(
         await page.locator("#growth-source-state").innerText(),
         /10월 25일/,
@@ -286,6 +288,7 @@ try {
         /과거.*2026-10-13/,
       );
       assert.equal(await page.locator("#growth-chart").isVisible(), false);
+      await page.locator("#growth-timing > summary").click();
       const [input, select] = await Promise.all([
         page.locator("#growth-topic").boundingBox(),
         page.locator("#growth-format").boundingBox(),
@@ -422,11 +425,11 @@ try {
     await page.getByText("PRIVATE-ACCOUNT", { exact: true }).waitFor();
     await page.getByRole("button", { name: "지난 게시", exact: true }).click();
     await page
-      .locator(".growth-post details")
+      .locator(".growth-post .growth-post-note")
       .nth(0)
       .evaluate((n) => (n.open = true));
     await page
-      .locator(".growth-post details")
+      .locator(".growth-post .growth-post-note")
       .nth(1)
       .evaluate((n) => (n.open = true));
     await page

@@ -15,12 +15,23 @@ from .growth_analytics import (
     measurement,
     selected_observation,
 )
+from .post_reading_service import post_memory
 
 
 def annotated_posts(db, settings, uid, *, observations=False):
     posts = current_posts(db, settings, uid)
     annotations = {a["post_id"]: a for a in db.list("post_annotations", uid)}
+    memory = post_memory(db, uid, posts)
     for p in posts:
+        saved = memory.get(p["id"])
+        p["reading"] = (
+            (
+                saved["reading"]
+                | {key: saved[key] for key in ("covered_count", "total_count", "read_at")}
+            )
+            if saved
+            else None
+        )
         p["annotation"] = annotations.get(p["id"], {})
         p["tags"] = list(dict.fromkeys(p.get("tags", []) + p["annotation"].get("tags", [])))
     if observations:

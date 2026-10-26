@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.api_core.exceptions import ResourceExhausted
@@ -28,6 +29,8 @@ def create_app(
     image_reviewer=None,
     buffer_client=None,
     growth_generator=None,
+    post_reader=None,
+    post_downloader=None,
 ):
     settings = settings or Settings.from_env()
     firebase = Firebase(settings)
@@ -42,6 +45,8 @@ def create_app(
     app.state.growth_generator = growth_generator or app.state.generator
     app.state.buffer_client = buffer_client or BufferClient(settings)
     app.state.image_reviewer = image_reviewer or ImageReviewer(settings)
+    app.state.post_reader = post_reader or ImageReviewer(settings)
+    app.state.post_downloader = post_downloader
     app.add_middleware(ImageReviewBodyLimit)
     app.add_middleware(
         CORSMiddleware,
@@ -49,6 +54,19 @@ def create_app(
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_input(request: Request, exc: RequestValidationError):
+        # Image payloads and other submitted values must not be echoed into error logs/UI.
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {k: error[k] for k in ("type", "loc", "msg") if k in error}
+                    for error in exc.errors()
+                ]
+            },
+        )
 
     @app.exception_handler(Exception)
     async def unavailable(request: Request, exc: Exception):

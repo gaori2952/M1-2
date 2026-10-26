@@ -18,7 +18,7 @@ await page.route("**/auth.js*", (r) =>
 try {
   await page.goto("http://127.0.0.1:18101");
   await page
-    .getByRole("heading", { name: "다음 게시, 팔로워로 이어지게." })
+    .getByRole("heading", { name: "내 Instagram과 대화하기" })
     .waitFor();
   await page
     .getByRole("button", { name: "Buffer 새로 불러오기", exact: true })
@@ -36,7 +36,11 @@ try {
     })
     .waitFor();
   await page.locator(".growth-idea-source a").first().waitFor();
-  await page.getByText(/캡션 일부 참고 · 성과 수치 미포함/).waitFor();
+  await page.locator(".growth-message-sources > summary").click();
+  await page
+    .getByText(/성과 수치 미포함/)
+    .first()
+    .waitFor();
   assert.doesNotMatch(
     await page.locator("#growth-metrics").innerText(),
     /0건도 포함/,
@@ -53,9 +57,9 @@ try {
     path: "test-results/growth-content.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "새 성장 대화", exact: true }).click();
-  await page.locator("#growth-topic").fill("전기장");
+  await page.getByRole("button", { name: "새 대화", exact: true }).click();
   await page.locator("#growth-timing > summary").click();
+  await page.locator("#growth-topic").fill("전기장");
   const future = new Date(Date.now() + 86400000);
   future.setHours(20, 0, 0, 0);
   const local = new Date(future.getTime() - future.getTimezoneOffset() * 60000)

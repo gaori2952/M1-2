@@ -10,6 +10,7 @@ from .analytics import summarize
 from .content_search import select_contents
 from .generation import validate_reply
 from .growth_service import growth_context
+from .image_assets import decode_asset
 
 
 def request_status(db, uid, request_id):
@@ -62,14 +63,18 @@ def run_chat(db, generator, settings, uid, request):
     existing = db.get("requests", rid)
     if existing:
         return replay(existing)
-    all_sources = db.list("contents", uid)
+    for image in request.images:
+        decode_asset(image)
+    all_sources = db.list("contents", uid) if request.mode != "growth" else []
     selected = request.selected_content_ids
     if request.selected_idea:
         selected = list(dict.fromkeys(selected + request.selected_idea.source_ids))
         if len(selected) > 5:
             raise HTTPException(422, "참고 원고는 최대 5개입니다.")
     sources = select_contents(request.message, all_sources, selected)
-    profile = db.get("profiles", repo.identity(uid, "profile"))
+    profile = (
+        db.get("profiles", repo.identity(uid, "profile")) if request.mode != "growth" else None
+    )
     series = repo.owned(db, "series", request.series_id, uid) if request.series_id else None
     context = {
         "summary": summarize(db.list("data", uid), request.start, request.end),
@@ -143,13 +148,35 @@ def run_chat(db, generator, settings, uid, request):
             generator.generate(
                 request,
                 context,
-                [{"role": m["role"], "content": m["content"]} for m in history],
+                [
+                    {
+                        "role": m["role"],
+                        "content": m["content"],
+                        **(
+                            {"work_text": m["result"]["work_text"]}
+                            if m.get("result", {}).get("work_text")
+                            else {}
+                        ),
+                        **({"image_metadata_only": m["images"]} if m.get("images") else {}),
+                    }
+                    for m in history
+                ],
             ),
             request,
             source_ids,
         )
         if request.mode == "growth":
-            result["growth"] = context["growth"] | {"request_id": str(request.request_id)}
+            cited = set(result["source_ids"])
+            for idea in result["ideas"]:
+                cited.update(idea["source_ids"])
+            # Keep the full history in the model input, but persist only referenced history.
+            # The request response contains the result twice and must fit one Firestore document.
+            result["growth"] = context["growth"] | {
+                "request_id": str(request.request_id),
+                "content_history": [
+                    p for p in context["growth"]["content_history"] if p["id"] in cited
+                ],
+            }
         did = uuid4().hex if result["draft"] else None
 
         def finish(tx):
@@ -180,6 +207,9 @@ def run_chat(db, generator, settings, uid, request):
                 "owner_uid": uid,
                 "role": "user",
                 "content": request.message,
+                "images": [
+                    image.model_dump(exclude={"base64", "mime"}) for image in request.images
+                ],
                 "sequence": seq,
                 "created_at": repo.now(),
             }

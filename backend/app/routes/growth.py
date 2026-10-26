@@ -28,6 +28,8 @@ from ..growth_service import (
     save_experiment,
     update_experiment,
 )
+from ..post_reading_models import ReadPostInput
+from ..post_reading_service import read_post, reading_status, select_posts
 from .resources import store
 
 router = APIRouter(prefix="/api", dependencies=[Depends(require_owner)])
@@ -147,3 +149,35 @@ def edit_experiment(
     db=Depends(store),
 ):
     return update_experiment(db, request.app.state.settings, uid, key, body)
+
+
+@router.get("/post-readings/select")
+def select_reading(
+    request: Request,
+    query: str = Query(default="", max_length=4000),
+    post_id: list[str] = Query(default=[], max_length=5),
+    uid=Depends(require_owner),
+    db=Depends(store),
+):
+    return {"candidates": select_posts(db, request.app.state.settings, uid, query, post_id)}
+
+
+@router.post("/post-readings")
+def read_post_images(
+    body: ReadPostInput, request: Request, uid=Depends(require_owner), db=Depends(store)
+):
+    if not request.app.state.settings.generator_configured:
+        raise HTTPException(503, "이미지 읽기를 위한 AI 설정이 필요합니다.")
+    kwargs = (
+        {"downloader": request.app.state.post_downloader}
+        if request.app.state.post_downloader
+        else {}
+    )
+    return read_post(
+        db, request.app.state.post_reader, request.app.state.settings, uid, body, **kwargs
+    )
+
+
+@router.get("/post-readings/requests/{request_id}")
+def post_read_request(request_id: UUID, uid=Depends(require_owner), db=Depends(store)):
+    return reading_status(db, uid, request_id)

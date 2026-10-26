@@ -14,6 +14,9 @@ class GrowthOptions(GrowthInput):
     topic: str = Field(default="", max_length=300)
     slots: list[AwareDatetime] = Field(default_factory=list, max_length=14)
     observation_mode: Literal["lifetime", "seven_day"] = "lifetime"
+    post_ids: list[Annotated[str, Field(min_length=1, max_length=200)]] = Field(
+        default_factory=list, max_length=5
+    )
 
 
 class SyncInput(GrowthInput):

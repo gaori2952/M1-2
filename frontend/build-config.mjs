@@ -89,6 +89,7 @@ console.log("Built static frontend with public configuration only.");
 
 for (const file of [
   "app.js",
+  "growth.js",
   "card-editor.js",
   "card-renderer.js",
   "image-review.js",

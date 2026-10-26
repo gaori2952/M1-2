@@ -63,6 +63,15 @@ def post_reference(post, observation_mode, now):
         "observed_at": observation.get("observed_at"),
         "metrics": measurement(post, observation_mode, now),
         "tags": post.get("tags", []),
+        "reading": post.get("reading"),
+        "preview_url": next(
+            (
+                a.get("thumbnail") or a.get("source")
+                for a in post.get("assets", [])
+                if a.get("thumbnail") or a.get("mime_type", "").startswith("image/")
+            ),
+            "",
+        ),
     }
 
 
@@ -77,11 +86,26 @@ def content_references(posts, options, query, now=None):
         key=lambda p: (dt(p["sent_at"]), p["id"]),
         reverse=True,
     )
-    related = select_contents(
-        query + " " + options.topic,
-        [p | {"title": p.get("text", "")[:120]} for p in recent],
-        [],
-    )
+    by_id = {p["id"]: p for p in recent}
+    if any(key not in by_id for key in options.post_ids):
+        raise HTTPException(404, "선택한 게시물을 찾을 수 없습니다.")
+    searchable = []
+    for p in recent:
+        reading = p.get("reading") or {}
+        observed = " ".join(
+            [
+                reading.get("summary", ""),
+                *reading.get("topics", []),
+                *[page["text"] for page in reading.get("pages", [])],
+            ]
+        )
+        searchable.append(
+            p | {"title": p.get("text", "")[:120], "text": p.get("text", "") + "\n" + observed}
+        )
+    related = [
+        by_id[p["id"]]
+        for p in select_contents(query + " " + options.topic, searchable, options.post_ids)
+    ]
     same_format = [p for p in recent if p["format"] == options.format]
     ranked = sorted(
         [
@@ -94,6 +118,7 @@ def content_references(posts, options, query, now=None):
     )
     chosen, reasons = {}, defaultdict(list)
     for pool, label in [
+        ([by_id[key] for key in options.post_ids], "사용자가 선택한 게시물"),
         (related[:2], "질문·관심 주제와 관련된 캡션"),
         (ranked[:2], "같은 형식의 팔로우 전환율 상위"),
         (same_format[:1], "같은 형식의 최근 게시물"),
@@ -118,6 +143,27 @@ def content_references(posts, options, query, now=None):
                 "sent_at": p["sent_at"],
                 "caption_excerpt": p.get("text", "")[:300],
                 "external_link": p.get("external_link", ""),
+                "preview_url": next(
+                    (
+                        a.get("thumbnail") or a.get("source")
+                        for a in p.get("assets", [])
+                        if a.get("thumbnail") or a.get("mime_type", "").startswith("image/")
+                    ),
+                    "",
+                ),
+                "reading": {
+                    key: p["reading"].get(key)
+                    for key in (
+                        "title",
+                        "summary",
+                        "topics",
+                        "covered_count",
+                        "total_count",
+                        "read_at",
+                    )
+                }
+                if p.get("reading")
+                else None,
             }
             for p in recent[:60]
         ],
@@ -273,7 +319,7 @@ def build_recommendation(posts, channel, options, version, now=None):
         "candidates": candidates[:2],
         "evidence": [post_reference(p, options.observation_mode, now) for p in evidence],
         "time_evidence": [
-            post_reference(p, options.observation_mode, now)
+            post_reference(p, options.observation_mode, now) | {"reading": None}
             for p in selected
             if p["id"] in candidate_ids
         ],

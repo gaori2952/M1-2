@@ -47,8 +47,32 @@ class AnthropicGenerator:
                         {"type": "text", "text": user_context(context, history)},
                         {
                             "type": "text",
-                            "text": json.dumps(request.model_dump(mode="json"), ensure_ascii=False),
+                            "text": json.dumps(
+                                request.model_dump(mode="json", exclude={"images"}),
+                                ensure_ascii=False,
+                            ),
                         },
+                    ]
+                    + [
+                        block
+                        for image in getattr(request, "images", [])
+                        for block in (
+                            {
+                                "type": "text",
+                                "text": json.dumps(
+                                    {"card_id": image.card_id, "name": image.name},
+                                    ensure_ascii=False,
+                                ),
+                            },
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": image.mime,
+                                    "data": image.base64,
+                                },
+                            },
+                        )
                     ],
                 }
             ],
