@@ -103,6 +103,54 @@ async function check(name, fn) {
 }
 try {
   await check(
+    "startup avoids duplicate archive reads and retired-tool preloads",
+    async () => {
+      const calls = [];
+      const page = await fixture(async (r, p) => {
+        calls.push(p);
+        return false;
+      });
+      await page.goto("http://127.0.0.1:18101");
+      await page
+        .getByText("과거 계정 일별 기록 · 보관된 자료 없음", { exact: true })
+        .waitFor();
+      assert.equal(calls.filter((p) => p === "/api/data").length, 1);
+      assert.equal(calls.filter((p) => p === "/api/data/summary").length, 1);
+      assert.equal(
+        calls.filter((p) =>
+          ["/api/contents", "/api/profile", "/api/drafts"].includes(p),
+        ).length,
+        0,
+      );
+      await page.close();
+    },
+  );
+  await check(
+    "database quota message is not mislabeled as a Buffer connection setting",
+    async () => {
+      const message = "데이터베이스 조회 한도를 초과했어요.";
+      const page = await fixture(async (r, p) => {
+        if (p === "/api/buffer/status" || p === "/api/data") {
+          await r.fulfill({
+            status: 503,
+            json: { code: "database_quota_exceeded", detail: message },
+          });
+          return true;
+        }
+      });
+      await page.goto("http://127.0.0.1:18101");
+      await page
+        .locator("#growth-sync-state")
+        .getByText(message, { exact: true })
+        .waitFor();
+      assert.equal(
+        await page.locator("#growth-gpt-state").innerText(),
+        message,
+      );
+      await page.close();
+    },
+  );
+  await check(
     "data view prioritizes current Buffer posts and locks imported rows",
     async () => {
       const page = await fixture(async (r, p) => {

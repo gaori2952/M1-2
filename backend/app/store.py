@@ -1,7 +1,10 @@
 """Firestore adapter. Writes are delayed until all transaction reads finish."""
 
 import json
+import time
+from copy import deepcopy
 from functools import cached_property
+from threading import RLock
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -35,7 +38,11 @@ class FirestoreUnit:
         self.writes = []
 
     def get(self, collection, key):
-        snap = self.db.collection(collection).document(key).get(transaction=self.transaction)
+        snap = (
+            self.db.collection(collection)
+            .document(key)
+            .get(transaction=self.transaction, retry=None, timeout=15)
+        )
         return snap.to_dict() if snap.exists else None
 
     def list(self, collection, uid):
@@ -45,7 +52,9 @@ class FirestoreUnit:
             .where(filter=FieldFilter("owner_uid", "==", uid))
             .limit(10001)
         )
-        docs = [s.to_dict() for s in query.stream(transaction=self.transaction)]
+        docs = [
+            s.to_dict() for s in query.stream(transaction=self.transaction, retry=None, timeout=15)
+        ]
         if len(docs) > 10000:
             raise HTTPException(
                 413,
@@ -71,12 +80,28 @@ class FirestoreUnit:
 class FirestoreStore:
     def __init__(self, firebase):
         self.firebase = firebase
+        self._cache = {}
+        self._lock = RLock()
+
+    def _read(self, kind, args):
+        # Owner/path-scoped copies avoid repeated scans and shared mutation between services.
+        key = (kind, *args)
+        with self._lock:
+            cached = self._cache.get(key)
+            if cached and cached[0] > time.monotonic():
+                return deepcopy(cached[1])
+            value = getattr(FirestoreUnit(self.firebase.db), kind)(*args)
+            if len(self._cache) >= 128:
+                self._cache.clear()
+            ttl = 900 if args[0] == "data" else 60
+            self._cache[key] = (time.monotonic() + ttl, deepcopy(value))
+            return value
 
     def get(self, *args):
-        return FirestoreUnit(self.firebase.db).get(*args)
+        return self._read("get", args)
 
     def list(self, *args):
-        return FirestoreUnit(self.firebase.db).list(*args)
+        return self._read("list", args)
 
     def atomic(self, fn):
         @firestore.transactional
@@ -90,4 +115,9 @@ class FirestoreStore:
                     transaction.delete(ref)
             return result
 
-        return run(self.firebase.db.transaction())
+        with self._lock:
+            self._cache.clear()
+            try:
+                return run(self.firebase.db.transaction())
+            finally:
+                self._cache.clear()
