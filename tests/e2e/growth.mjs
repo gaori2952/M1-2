@@ -129,7 +129,10 @@ try {
     path: "test-results/growth-data.png",
     fullPage: false,
   });
-  await page.getByRole("button", { name: "대화 기록", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "주요 메뉴" })
+    .getByRole("button", { name: "대화 기록", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "불러오기", exact: true })
     .first()

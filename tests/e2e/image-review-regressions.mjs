@@ -42,7 +42,6 @@ async function fixture(fn) {
     return r.fulfill({ json: doc });
   });
   await page.goto("http://127.0.0.1:18101");
-  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("#review-upload").waitFor();
   api.hash = await page.evaluate(async (data) => {
@@ -102,7 +101,6 @@ async function fixture(fn) {
     })),
   };
   await page.reload();
-  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("[data-review-card]").nth(5).waitFor();
   try {
@@ -186,7 +184,6 @@ try {
           }),
       );
       await page.reload();
-      await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
       await page
         .getByRole("button", { name: "이미지 검토", exact: true })
         .click();

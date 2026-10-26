@@ -37,7 +37,6 @@ export async function connectAuth(cb){window.testSession=cb;cb({uid:'alice',disp
 );
 try {
   await page.goto("http://127.0.0.1:18101");
-  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("#review-upload").waitFor();
   await page.locator("#review-upload").setInputFiles({
@@ -96,7 +95,6 @@ try {
   await page.getByText("이전 버전 1 · 읽기 전용", { exact: true }).waitFor();
   await page.getByRole("button", { name: "현재 버전으로 돌아가기" }).click();
   await page.reload();
-  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.locator("[data-review-card]").nth(5).waitFor();
   assert.equal(
@@ -136,7 +134,6 @@ try {
       }),
   );
   await page.reload();
-  await page.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await page.getByRole("button", { name: "이미지 검토", exact: true }).click();
   await page.getByText(/이 브라우저에 이미지가 없어요/).waitFor();
   await page
@@ -163,7 +160,6 @@ try {
     r.fulfill({ contentType: "text/javascript", body: authStub }),
   );
   await recoveryPage.goto("http://127.0.0.1:18101");
-  await recoveryPage.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await recoveryPage
     .getByRole("button", { name: "이미지 검토", exact: true })
     .click();
@@ -199,7 +195,6 @@ try {
     },
   );
   await recoveryPage.reload();
-  await recoveryPage.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await recoveryPage
     .getByRole("button", { name: "이미지 검토", exact: true })
     .click();
@@ -266,7 +261,6 @@ try {
     if (r.method() === "POST" && r.url().includes("/image-reviews")) posts++;
   });
   await storagePage.goto("http://127.0.0.1:18101");
-  await storagePage.locator(".legacy-tools").evaluate((n) => (n.open = true));
   await storagePage
     .getByRole("button", { name: "이미지 검토", exact: true })
     .click();
