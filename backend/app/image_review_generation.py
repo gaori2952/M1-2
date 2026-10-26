@@ -75,17 +75,6 @@ class ImageReviewer:
             )
             with client.messages.stream(
                 model=s.anthropic_model,
-                max_tokens=s.max_output_tokens,
-                system=IMAGE_REVIEW_SYSTEM,
-                messages=[{"role": "user", "content": blocks}],
-                tools=[
-                    {
-                        "name": "submit_review",
-                        "description": "장별 검토 결과 제출",
-                        "input_schema": ReviewReply.model_json_schema(),
-                    }
-                ],
-                tool_choice={"type": "tool", "name": "submit_review"},
                 max_tokens=min(8000, s.max_output_tokens * 2)
                 if tool_name == "submit_post_reading"
                 else s.max_output_tokens,
@@ -104,13 +93,11 @@ class ImageReviewer:
             if result.stop_reason not in ("tool_use", "end_turn"):
                 raise ValueError("Incomplete image review")
             tool = next(
-                (b for b in result.content if b.type == "tool_use" and b.name == "submit_review"),
                 (b for b in result.content if b.type == "tool_use" and b.name == tool_name),
                 None,
             )
             if tool is None:
                 raise ValueError("Missing image review")
-            return ReviewReply.model_validate(tool.input).model_dump()
             return schema.model_validate(tool.input).model_dump()
         if not s.openai_api_key:
             raise HTTPException(503, "이미지 검토를 위한 OPENAI_API_KEY 설정이 필요합니다.")
@@ -135,11 +122,6 @@ class ImageReviewer:
         response = client.responses.parse(
             model=s.openai_model,
             input=[
-                {"role": "system", "content": IMAGE_REVIEW_SYSTEM},
-                {"role": "user", "content": content},
-            ],
-            text_format=ReviewReply,
-            max_output_tokens=s.max_output_tokens,
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": content},
             ],

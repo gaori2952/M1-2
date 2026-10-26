@@ -1429,7 +1429,6 @@ async function session(user) {
     $("#trend-chart").replaceChildren();
     $("#style-preview").textContent = "확인한 제작 선호가 아직 없어요.";
     renderSources();
-    show("review");
     show("growth");
     return;
   }

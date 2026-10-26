@@ -81,7 +81,6 @@ const html = await readFile(new URL("index.html", root), "utf8");
 await writeFile(
   new URL("public/index.html", root),
   html.replace(
-    /(href|src)="(styles\.css|image-review\.css|app\.js|config\.js)"/g,
     /(href|src)="(styles\.css|growth\.css|image-review\.css|app\.js|config\.js)"/g,
     `$1="$2?v=${version}"`,
   ),
@@ -99,7 +98,6 @@ for (const file of [
   await writeFile(
     new URL(`public/${file}`, root),
     js.replace(
-      /from (["'])\.\/(api|auth|card-editor|card-renderer|image-review|review-images)\.js\1/g,
       /from (["'])\.\/(api|auth|growth|card-editor|card-renderer|image-review|review-images)\.js\1/g,
       `from "./$2.js?v=${version}"`,
     ),

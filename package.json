@@ -10,7 +10,6 @@
     "test:editor": "node tests/e2e/editor.mjs",
     "test:editor-regressions": "node tests/e2e/editor-regressions.mjs",
     "test:image-review": "node tests/e2e/image-review.mjs",
-    "test:image-review-regressions": "node tests/e2e/image-review-regressions.mjs"
     "test:image-review-regressions": "node tests/e2e/image-review-regressions.mjs",
     "test:growth": "node tests/e2e/growth.mjs",
     "test:instagram-chat": "node tests/e2e/instagram-chat.mjs",

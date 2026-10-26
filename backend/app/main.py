@@ -21,7 +21,6 @@ from .store import Firebase, FirestoreStore
 
 
 def create_app(
-    settings=None, *, store=None, verify_token=None, generator=None, image_reviewer=None
     settings=None,
     *,
     store=None,
@@ -43,7 +42,6 @@ def create_app(
         AnthropicGenerator if settings.llm_provider == "anthropic" else OpenAIGenerator
     )
     app.state.generator = generator or default_generator(settings)
-    app.state.image_reviewer = image_reviewer or ImageReviewer(settings)
     app.state.growth_generator = growth_generator or app.state.generator
     app.state.buffer_client = buffer_client or BufferClient(settings)
     app.state.image_reviewer = image_reviewer or ImageReviewer(settings)
