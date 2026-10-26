@@ -21,8 +21,8 @@
 - 실제 Buffer 읽기와 사용자 승인 후 본인 Firestore에 저장·재조회하는 연결을 확인했습니다. 로컬 테스트는 별도로 수행합니다. 아래 화면은 **합성 데이터와 테스트 생성기**이며 실제 계정 성과나 AI 답변의 증명이 아닙니다.
 - 성장 상담도 기존 `LLM_PROVIDER` 설정을 사용합니다. 현재 사용자의 Anthropic 호환 API로 실제 성장 상담 응답을 확인했습니다. OpenAI 키를 추가로 요구하지 않습니다. 선택한 제공업체의 키가 없을 때만 설정 필요 상태를 표시합니다.
 - 실제 개인 자료 검증에서는 질문에 맞는 콘텐츠 후보는 반환했지만, 짧은 캡션에 없는 기존 글의 내용을 추정한 문제가 남았습니다. **개인화 추천 품질 검증을 통과한 상태는 아닙니다.** 현재 입력은 캡션·성과이며 이미지 본문은 읽지 않습니다.
-- 새 기능의 운영 배포는 아직 하지 않았습니다. 로컬 구현, Git 커밋, 운영 배포 상태를 구분합니다.
-- 기존 운영 주소: [프론트](https://m1-2-frontend-theta.vercel.app/) · [백엔드](https://m1-2-6ae7.onrender.com/) · [Swagger](https://m1-2-6ae7.onrender.com/docs). 이 링크에 새 기능이 반영됐다는 의미는 아닙니다.
+- **2026-10-26 운영 반영 완료:** [PR #9](https://github.com/gaori2952/M1-2/pull/9)를 `main`에 병합했습니다. Vercel 프론트와 Render 백엔드에서 새 화면·성장 API·로그인된 계정의 Buffer 동기화를 확인했습니다. 배포 성공과 위의 추천 품질 한계는 구분합니다.
+- 운영 주소: [프론트](https://m1-2-frontend-theta.vercel.app/) · [백엔드 상태](https://m1-2-6ae7.onrender.com/health) · [Swagger](https://m1-2-6ae7.onrender.com/docs).
 
 검증 명령과 범위는 [검증 기록](docs/verification.md)에 있습니다.
 
