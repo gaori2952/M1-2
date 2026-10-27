@@ -1014,6 +1014,80 @@ td button {
   color: #414141;
   line-height: 1.8;
 }
+.server-status {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 18px 20px;
+  margin: 16px 0 24px;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 4px 18px #0000000a;
+}
+.server-status strong {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.server-status p {
+  margin: 6px 0 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.server-status-time {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 11px;
+  line-height: 1.7;
+}
+#server-elapsed {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.server-status-spinner {
+  width: 14px;
+  height: 14px;
+  margin-top: 5px;
+  border: 2px solid var(--line);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: server-turn 1s linear infinite;
+}
+.server-status[data-state="delayed"] .server-status-spinner {
+  animation: none;
+  border-color: var(--ink);
+}
+.server-status button {
+  min-height: 44px;
+}
+@keyframes server-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 640px) {
+  .server-status {
+    padding: 16px;
+    gap: 10px;
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+  .server-status button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .server-status-spinner {
+    animation: none;
+  }
+}
 #notice.error {
   background: #f4f4f4;
   border-color: #d4d4d4;

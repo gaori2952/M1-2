@@ -29,6 +29,30 @@
       </div>
     </aside>
     <main>
+      <aside
+        id="server-status"
+        class="server-status"
+        aria-label="서버 연결 상태"
+        data-state="checking"
+      >
+        <span class="server-status-spinner" aria-hidden="true"></span>
+        <div>
+          <strong id="server-status-title" role="status"
+            >서버 연결을 준비하고 있어요</strong
+          >
+          <p>
+            일정 시간 사용하지 않으면 서버가 절전 상태로 전환돼요. 첫 접속은
+            서버를 다시 시작하느라 약 1분 정도 걸릴 수 있어요.
+          </p>
+          <div class="server-status-time">
+            <span id="server-elapsed">0초 경과</span
+            ><span id="server-estimate">예상 준비 시간 약 30~90초</span>
+          </div>
+        </div>
+        <button id="server-retry" type="button" class="secondary" hidden>
+          다시 연결
+        </button>
+      </aside>
       <div id="notice" role="status" aria-live="polite" hidden></div>
       <div id="setup" class="setup" hidden>
         Google 로그인 후 내 게시물을 연결하고, 초안 비교부터 다음 시리즈까지

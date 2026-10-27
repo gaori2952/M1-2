@@ -1,0 +1,35 @@
+{
+  "captured_at": "2026-10-27T03:45:00.482Z",
+  "data_source": "synthetic FastAPI fixture; authentication/model boundary replaced",
+  "test": "tests/e2e/growth.mjs",
+  "results": [
+    {
+      "width": 360,
+      "height": 844,
+      "horizontal_overflow": false,
+      "navigation": "passed",
+      "question_input": "passed",
+      "answer_visible": true,
+      "send_button_height": 42
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "horizontal_overflow": false,
+      "navigation": "passed",
+      "question_input": "passed",
+      "answer_visible": true,
+      "send_button_height": 42
+    },
+    {
+      "width": 768,
+      "height": 844,
+      "horizontal_overflow": false,
+      "navigation": "passed",
+      "question_input": "passed",
+      "answer_visible": true,
+      "send_button_height": 42
+    }
+  ],
+  "page_errors": []
+}

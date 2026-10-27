@@ -3,8 +3,10 @@ import { connectAuth } from "./auth.js";
 import { createApi } from "./api.js";
 import { mountCardEditor, resetCardEditor } from "./card-editor.js";
 import { mountImageReview } from "./image-review.js";
+import { mountServerStatus } from "./server-status.js";
 
 const $ = (selector) => document.querySelector(selector);
+mountServerStatus($("#server-status"));
 const labels = {
   views: "조회수",
   viewers: "시청자",

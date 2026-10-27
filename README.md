@@ -107,8 +107,86 @@ Firebase에서 Google 로그인을 활성화하고 Authorized domains에 로컬�
 ## 구현과 검증
 
 - **필수 기능:** 데이터 CRUD · 요약 API · AI 채팅과 로딩 · 대화 저장·불러오기 · 모바일 대응
-- **자동 검사:** 백엔드 165개 · 빌드 설정 3개 · 새 대화 시나리오 6개 · 기존 성장 회귀 9개 통과
+- **자동 검사:** 백엔드 165개 · 빌드 설정 3개 · 연결 배너 4개 시나리오 · 반응형 3개 크기 통과
 - **운영 확인:** 게시물 조회 · 이미지 본문 재사용 · 실제 AI 답변과 대화 저장 확인
+
+### 실행 증거
+
+**① 모바일·작은 화면**
+
+360·390·768px에서 **가로 넘침 없음, 메뉴 이동, 질문 입력, 답변 표시**를 확인했습니다. 합성 데이터와 로컬 FastAPI를 사용한 브라우저 실행 결과입니다.
+
+[반응형 테스트 결과 JSON](docs/evidence/responsive-test.json) · [테스트 코드](tests/e2e/growth.mjs)
+
+<details>
+<summary>390px 모바일에서 질문·답변 화면 보기</summary>
+
+<img src="docs/screenshots/mobile-chat.png" width="320" alt="390px 모바일에서 메뉴, 질문 입력, AI 답변과 참고 게시물이 표시되는 화면" />
+
+</details>
+
+**② 데이터 요약 API**
+
+`GET /api/data/summary`는 별도 라우트이며, `/api` 접두사와 사용자 인증을 적용합니다. [구현 코드](backend/app/routes/resources.py#L50-L58):
+
+<details>
+<summary>라우트 코드와 HTTP 200 응답 예시 보기</summary>
+
+```python
+@router.get("/data/summary")
+def summary(
+    start: date | None = None,
+    end: date | None = None,
+    uid=Depends(require_owner),
+    db=Depends(store),
+):
+    return summarize(db.list("data", uid), start, end)
+```
+
+합성 데이터 100개를 데이터 API로 추가한 뒤 아래 요청을 실제 FastAPI 라우트에 실행했습니다. [HTTP 200 실행 결과](docs/evidence/summary-api-test.txt) · [전체 JSON 응답](docs/evidence/data-summary.json)
+
+```http
+GET /api/data/summary?start=2026-10-01&end=2026-10-07
+```
+
+응답 일부:
+
+```json
+{
+  "period": {"start": "2026-10-01", "end": "2026-10-07"},
+  "count": 7,
+  "metrics": {
+    "views": {"average": 195.0, "max": 198, "min": 192, "trend": "up"}
+  }
+}
+```
+
+</details>
+
+**③ 배포된 Swagger**
+
+2026-10-27 배포 서버의 `/docs`에서 **HTTP 200**과 Swagger HTML 응답을 확인했습니다.
+
+```bash
+curl -i https://m1-2-6ae7.onrender.com/docs
+```
+
+[실제 curl 응답](docs/evidence/swagger-http.txt) · [배포 서버에서 확인한 API 목록](docs/evidence/deployed-api.json) · [Swagger 열기](https://m1-2-6ae7.onrender.com/docs)
+
+### 첫 접속 연결 안내
+
+페이지를 열면 로그인 전부터 서버 연결을 확인합니다. [Render 무료 서비스](https://render.com/docs/free#spinning-down-on-idle)는 15분 동안 요청이 없으면 절전 상태로 전환되어 첫 요청에 약 1분이 걸릴 수 있습니다.
+
+상단 배너는 **절전 안내·경과 시간·예상 남은 대기 범위**를 표시하고 서버가 준비되면 자동으로 닫힙니다. 예상 범위는 실측 완료율이 아니며, 90초를 넘으면 무한 요청 대신 **다시 연결** 버튼을 표시합니다. 입력한 질문은 유지됩니다.
+
+<details>
+<summary>모바일 서버 연결 배너 보기</summary>
+
+<img src="docs/screenshots/server-waking-mobile.png" width="320" alt="서버 준비 이유, 10초 경과와 예상 대기 범위를 보여주는 상단 배너" />
+
+</details>
+
+재현: `pnpm test:server-status` / `CAPTURE_EVIDENCE=1 pnpm test:growth`. 로컬 서버 준비는 [검증 기록](docs/verification.md)을 참고합니다.
 
 ### 더 알아보기
 

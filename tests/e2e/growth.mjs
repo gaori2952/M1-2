@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROME_PATH,
@@ -57,6 +57,77 @@ try {
     path: "test-results/growth-content.png",
     fullPage: true,
   });
+  const responsive = [];
+  for (const width of [360, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await page.getByRole("button", { name: "지난 게시", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "불러온 게시물", exact: true })
+      .waitFor();
+    await page
+      .getByRole("button", { name: "Instagram 대화", exact: true })
+      .click();
+    assert.equal(
+      await page
+        .getByRole("heading", {
+          name: "1. 전기장은 있는데 전위차는 왜 0일까?",
+          exact: true,
+        })
+        .isVisible(),
+      true,
+    );
+    await page
+      .locator("#growth-question")
+      .fill("모바일에서도 다음 콘텐츠를 질문해요");
+    assert.equal(
+      await page.locator("#growth-question").inputValue(),
+      "모바일에서도 다음 콘텐츠를 질문해요",
+    );
+    const send = await page.locator("#growth-chat-send").boundingBox();
+    assert.ok(send.width >= 40 && send.height >= 40);
+    responsive.push({
+      width,
+      height: 844,
+      horizontal_overflow: false,
+      navigation: "passed",
+      question_input: "passed",
+      answer_visible: true,
+      send_button_height: send.height,
+    });
+    if (width === 390 && process.env.CAPTURE_EVIDENCE === "1") {
+      await mkdir("docs/screenshots", { recursive: true });
+      await page.locator("#server-status").waitFor({ state: "hidden" });
+      await page.screenshot({
+        path: "docs/screenshots/mobile-chat.png",
+        fullPage: true,
+      });
+    }
+  }
+  if (process.env.CAPTURE_EVIDENCE === "1") {
+    await mkdir("docs/evidence", { recursive: true });
+    await writeFile(
+      "docs/evidence/responsive-test.json",
+      JSON.stringify(
+        {
+          captured_at: new Date().toISOString(),
+          data_source:
+            "synthetic FastAPI fixture; authentication/model boundary replaced",
+          test: "tests/e2e/growth.mjs",
+          results: responsive,
+          page_errors: errors,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("button", { name: "새 대화", exact: true }).click();
   await page.locator("#growth-timing > summary").click();
   await page.locator("#growth-topic").fill("전기장");

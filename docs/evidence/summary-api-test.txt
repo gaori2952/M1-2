@@ -1,0 +1,6 @@
+FastAPI TestClient + test-only MemoryStore
+Dataset: 100 synthetic daily records created through POST /api/data
+GET /api/data/summary?start=2026-10-01&end=2026-10-07
+HTTP 200
+Assertions: count=7, views.average=195.0, views.max=198, views.min=192
+Source: backend/app/routes/resources.py; router prefix /api
