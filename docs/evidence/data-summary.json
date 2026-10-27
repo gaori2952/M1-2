@@ -1,0 +1,321 @@
+{
+  "period": {
+    "start": "2026-10-01",
+    "end": "2026-10-07"
+  },
+  "previous_period": {
+    "start": "2026-09-24",
+    "end": "2026-09-30"
+  },
+  "date_count": 7,
+  "count": 7,
+  "metrics": {
+    "views": {
+      "count": 7,
+      "missing_count": 0,
+      "total": 1365,
+      "average": 195.0,
+      "min": 192,
+      "max": 198,
+      "peak_date": "2026-10-07",
+      "previous_count": 7,
+      "previous_missing_count": 0,
+      "previous_average": 188.0,
+      "change": 7.0,
+      "change_percent": 3.723404255319149,
+      "trend": "up"
+    },
+    "viewers": {
+      "count": 0,
+      "missing_count": 7,
+      "total": null,
+      "average": null,
+      "min": null,
+      "max": null,
+      "peak_date": null,
+      "previous_count": 0,
+      "previous_missing_count": 7,
+      "previous_average": null,
+      "change": null,
+      "change_percent": null,
+      "trend": "insufficient_data"
+    },
+    "interactions": {
+      "count": 0,
+      "missing_count": 7,
+      "total": null,
+      "average": null,
+      "min": null,
+      "max": null,
+      "peak_date": null,
+      "previous_count": 0,
+      "previous_missing_count": 7,
+      "previous_average": null,
+      "change": null,
+      "change_percent": null,
+      "trend": "insufficient_data"
+    },
+    "visits": {
+      "count": 0,
+      "missing_count": 7,
+      "total": null,
+      "average": null,
+      "min": null,
+      "max": null,
+      "peak_date": null,
+      "previous_count": 0,
+      "previous_missing_count": 7,
+      "previous_average": null,
+      "change": null,
+      "change_percent": null,
+      "trend": "insufficient_data"
+    },
+    "follows": {
+      "count": 0,
+      "missing_count": 7,
+      "total": null,
+      "average": null,
+      "min": null,
+      "max": null,
+      "peak_date": null,
+      "previous_count": 0,
+      "previous_missing_count": 7,
+      "previous_average": null,
+      "change": null,
+      "change_percent": null,
+      "trend": "insufficient_data"
+    },
+    "link_clicks": {
+      "count": 0,
+      "missing_count": 7,
+      "total": null,
+      "average": null,
+      "min": null,
+      "max": null,
+      "peak_date": null,
+      "previous_count": 0,
+      "previous_missing_count": 7,
+      "previous_average": null,
+      "change": null,
+      "change_percent": null,
+      "trend": "insufficient_data"
+    }
+  },
+  "daily": [
+    {
+      "date": "2026-10-01",
+      "metric": "views",
+      "value": 192
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "views",
+      "value": 193
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "views",
+      "value": 194
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "views",
+      "value": 195
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "views",
+      "value": 196
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "views",
+      "value": 197
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "views",
+      "value": 198
+    },
+    {
+      "date": "2026-10-01",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "viewers",
+      "value": null
+    },
+    {
+      "date": "2026-10-01",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "interactions",
+      "value": null
+    },
+    {
+      "date": "2026-10-01",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "visits",
+      "value": null
+    },
+    {
+      "date": "2026-10-01",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "follows",
+      "value": null
+    },
+    {
+      "date": "2026-10-01",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-02",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-03",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-04",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-05",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-06",
+      "metric": "link_clicks",
+      "value": null
+    },
+    {
+      "date": "2026-10-07",
+      "metric": "link_clicks",
+      "value": null
+    }
+  ],
+  "limitations": [
+    "계정 일별 지표는 게시물별 성과나 인과관계의 근거가 아닙니다.",
+    "시청자 합계는 기간 고유 인원, 팔로우 합계는 전체 팔로워 수가 아닙니다.",
+    "결측값은 0으로 채우지 않습니다."
+  ]
+}

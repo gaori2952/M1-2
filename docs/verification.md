@@ -1,5 +1,25 @@
 # 검증 기록
 
+## 2026-10-27 모바일 실행 증거와 서버 준비 배너
+
+- 360·390·768px에서 가로 넘침, 메뉴 이동, 질문 입력, 답변 표시와 전송 버튼 크기를 실제 Chrome으로 검사했습니다. 합성 FastAPI 자료와 테스트 인증·생성기를 사용했습니다. [결과 JSON](evidence/responsive-test.json) · [390px 화면](screenshots/mobile-chat.png).
+- 서버 준비 배너 4개 시나리오 통과: 접속 즉시 노출·경과/예상 시간·준비 후 숨김, 일시적 503 복구, 90초 이후 자동 요청 중단·수동 재연결·입력 보존, 로딩 HTML을 준비 완료로 오인하지 않음. 실제 준비 완료율 대신 일반 준비 시간에 근거한 예상 범위를 표시합니다.
+- 실제 `/api/data/summary` 라우트에 합성 일별 기록 100개를 데이터 API로 추가해 기간 조회를 실행했습니다. HTTP 200, 7개 관측, 조회수 평균 195·최대 198·최소 192를 확인했습니다. [실행 결과](evidence/summary-api-test.txt) · [전체 응답](evidence/data-summary.json).
+- 배포 서버의 `/docs` curl HTTP 200과 Swagger HTML, `/openapi.json`의 필수 경로를 확인했습니다. [실제 HTTP 응답](evidence/swagger-http.txt) · [공개 API 목록](evidence/deployed-api.json).
+- 백엔드 165개, 빌드 설정 3개, 기존 Instagram 대화 6개와 성장 회귀 9개도 통과했습니다. 개인 계정 자료·키는 증거 파일에 포함하지 않았습니다.
+
+브라우저 재현은 별도 터미널에서 아래 세 서버/명령을 준비합니다. 합성 서버는 운영에 배포하지 않습니다.
+
+```bash
+uvicorn tests.growth_preview:app --app-dir backend --port 18100
+# 다른 터미널: 테스트용 정적 빌드와 서버
+API_BASE_URL=http://127.0.0.1:18100 FIREBASE_WEB_CONFIG='{}' node frontend/build-config.mjs
+python3 -m http.server 18101 --directory frontend/public
+# 다른 터미널: CHROME_PATH에 실행 가능한 Chrome 경로 지정
+pnpm test:server-status
+CAPTURE_EVIDENCE=1 pnpm test:growth
+```
+
 ## 2026-10-26 Instagram 대화와 본문 기억
 
 - 백엔드 전체 165개, 정적 빌드 설정 3개 통과. 게시물 소유권·출처 변경·캐시 재사용·만료 서명·이미지 제한·리디렉션·DNS·동시 읽기·공유 쿼터·저장 응답 유실·UTF-8 판독문 크기를 검증했습니다.

@@ -52,6 +52,7 @@ for (const file of [
   "review-images.js",
   "image-review.css",
   "api.js",
+  "server-status.js",
   "auth.js",
   "config.js",
 ])
@@ -72,6 +73,7 @@ for (const file of [
   "review-images.js",
   "image-review.css",
   "api.js",
+  "server-status.js",
   "auth.js",
   "config.js",
 ])
@@ -98,7 +100,7 @@ for (const file of [
   await writeFile(
     new URL(`public/${file}`, root),
     js.replace(
-      /from (["'])\.\/(api|auth|growth|card-editor|card-renderer|image-review|review-images)\.js\1/g,
+      /from (["'])\.\/(api|auth|growth|server-status|card-editor|card-renderer|image-review|review-images)\.js\1/g,
       `from "./$2.js?v=${version}"`,
     ),
   );

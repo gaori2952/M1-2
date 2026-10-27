@@ -11,10 +11,7 @@ export function createApi(getUser, notifySlow) {
     const token = await user.getIdToken();
     const controller = new AbortController();
     const slow = setTimeout(
-      () =>
-        notifySlow(
-          "첫 요청은 서버 시작으로 지연될 수 있어요. 잠시 기다려 주세요.",
-        ),
+      () => notifySlow("응답을 기다리고 있어요. 입력 내용은 유지됩니다."),
       8000,
     );
     const timeout = setTimeout(() => controller.abort(), 115000);

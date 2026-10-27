@@ -13,6 +13,7 @@
     "test:image-review-regressions": "node tests/e2e/image-review-regressions.mjs",
     "test:growth": "node tests/e2e/growth.mjs",
     "test:instagram-chat": "node tests/e2e/instagram-chat.mjs",
+    "test:server-status": "node tests/e2e/server-status.mjs",
     "test:growth-regressions": "node tests/e2e/growth-regressions.mjs"
   },
   "devDependencies": {

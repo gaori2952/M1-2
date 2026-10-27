@@ -20,6 +20,7 @@ async function fixture(fn) {
       "styles.css",
       "app.js",
       "api.js",
+      "server-status.js",
       "auth.js",
       "card-editor.js",
       "card-renderer.js",
@@ -64,6 +65,7 @@ test("build exports public config and excludes backend secrets", () =>
     assert.ok(!output.includes("must-not-be-exported"));
     assert.ok(!output.includes("private-server-only"));
     for (const name of [
+      "server-status.js",
       "image-review.js",
       "review-images.js",
       "image-review.css",

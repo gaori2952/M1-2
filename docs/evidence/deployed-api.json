@@ -1,0 +1,28 @@
+{
+  "base_url": "https://m1-2-6ae7.onrender.com",
+  "swagger_status": 200,
+  "paths": {
+    "/api/data": [
+      "get",
+      "post"
+    ],
+    "/api/data/{key}": [
+      "put",
+      "delete"
+    ],
+    "/api/data/summary": [
+      "get"
+    ],
+    "/api/conversations": [
+      "get",
+      "post"
+    ],
+    "/api/conversations/{key}": [
+      "get",
+      "delete"
+    ],
+    "/api/chat": [
+      "post"
+    ]
+  }
+}
