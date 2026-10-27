@@ -1146,6 +1146,8 @@
 }
 @media (max-width: 820px) {
   #growth-root .growth-chat-heading {
+    flex-direction: row;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
   }

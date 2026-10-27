@@ -200,6 +200,7 @@ try {
     for (const [width, height] of [
       [360, 640],
       [390, 844],
+      [721, 827],
       [768, 844],
     ]) {
       await page.setViewportSize({ width, height });
