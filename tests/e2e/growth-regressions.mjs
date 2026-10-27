@@ -367,10 +367,88 @@ try {
         JSON.parse(localStorage.getItem("follower-growth:alice:session")),
       );
       assert.equal(saved.pending?.request_id, pending.request_id);
+      assert.equal(await page.locator("#growth-question").inputValue(), "");
       assert.equal(
-        await page.locator("#growth-question").inputValue(),
+        await page.locator("[data-pending-request] > p").innerText(),
         "pending follow-up",
       );
+      await page.close();
+    },
+  );
+  await check(
+    "confirmed send remains sent when conversation loading fails",
+    async () => {
+      const page = await fixture(async (r, p) => {
+        if (p === "/api/chat") {
+          await r.fulfill({ json: { conversation_id: "existing" } });
+          return true;
+        }
+        if (p === "/api/conversations/existing") {
+          await r.fulfill({
+            status: 503,
+            json: { detail: "saved but reload unavailable" },
+          });
+          return true;
+        }
+      });
+      await page.goto("http://127.0.0.1:18101");
+      await page.getByText("PRIVATE-ACCOUNT", { exact: true }).waitFor();
+      await page.locator("#growth-question").fill("already saved question");
+      await page.locator("#growth-chat-send").click();
+      await page
+        .getByText("saved but reload unavailable", { exact: true })
+        .waitFor();
+      assert.equal(await page.locator("#growth-question").inputValue(), "");
+      assert.equal(
+        await page.locator("#growth-messages .user > p").innerText(),
+        "already saved question",
+      );
+      assert.equal(await page.locator("[data-pending-request]").count(), 0);
+      await page.close();
+    },
+  );
+  await check(
+    "reload reconciles a committed pending turn without duplicating it",
+    async () => {
+      const page = await fixture(async (r, p) => {
+        if (p === "/api/conversations/existing") {
+          await r.fulfill({
+            json: {
+              id: "existing",
+              messages: [
+                ...conversation.messages,
+                { role: "user", content: pending.message },
+                {
+                  role: "assistant",
+                  content: "committed answer",
+                  result: {
+                    growth: { ...growth, request_id: pending.request_id },
+                  },
+                },
+              ],
+            },
+          });
+          return true;
+        }
+      });
+      await page.addInitScript(
+        ({ pending }) =>
+          localStorage.setItem(
+            "follower-growth:alice:session",
+            JSON.stringify({ cid: "existing", pending }),
+          ),
+        { pending },
+      );
+      await page.goto("http://127.0.0.1:18101");
+      await page.getByText("committed answer", { exact: true }).waitFor();
+      assert.equal(await page.locator("#growth-messages .user").count(), 1);
+      assert.equal(await page.locator("[data-pending-request]").count(), 0);
+      assert.equal(await page.locator("#growth-question").inputValue(), "");
+      assert.equal(await page.locator("#growth-question").isEnabled(), true);
+      const saved = await page.evaluate(() =>
+        JSON.parse(localStorage.getItem("follower-growth:alice:session")),
+      );
+      assert.equal(saved.pending, null);
       await page.close();
     },
   );

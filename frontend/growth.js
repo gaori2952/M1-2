@@ -130,6 +130,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       if (same(e)) notice(error.message, true);
     } finally {
       if (same(e)) {
+        restoreRejectedQuestion();
         busy = false;
         controls.forEach(([n, d]) => (n.disabled = d));
         $("#growth-chat-send").disabled = !user || !status?.chat_configured;
@@ -163,6 +164,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       previewURLs.delete(image.src);
     }
     box.replaceChildren();
+    if (pending) return;
     for (const meta of imageAssets) {
       const figure = node("figure");
       figure.append(
@@ -364,6 +366,34 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       const thread = root.querySelector(".growth-thread");
       thread.scrollTop = thread.scrollHeight;
     });
+    return item;
+  }
+  function renderPendingMessage() {
+    if (!pending || (pending.conversation_id || null) !== (cid || null)) return;
+    const existing = root.querySelector("[data-pending-request]");
+    if (existing?.dataset.pendingRequest !== pending.request_id) {
+      existing?.remove();
+      const item = appendMessage(
+        "user",
+        pending.message,
+        null,
+        pending.image_assets || [],
+      );
+      item.dataset.pendingRequest = pending.request_id;
+    }
+    $("#growth-question").value = "";
+    renderAttachments();
+    persist();
+  }
+  function restoreRejectedQuestion() {
+    const item = root.querySelector("[data-pending-request]");
+    if (pending || !item) return;
+    if (!$("#growth-question").value)
+      $("#growth-question").value = item.querySelector("p").textContent;
+    item.remove();
+    updateChatMode();
+    renderAttachments();
+    persist();
   }
   function renderSlots() {
     const box = $("#growth-slots");
@@ -1022,6 +1052,9 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       const r = await request(`/api/chat/requests/${pending.request_id}`);
       if (r.status === "done") {
         cid = r.response.conversation_id;
+        root
+          .querySelector("[data-pending-request]")
+          ?.removeAttribute("data-pending-request");
         pending = null;
         imageAssets = [];
         $("#growth-question").value = "";
@@ -1058,6 +1091,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     }
     $("#growth-loading").hidden = false;
     $("#growth-loading").textContent = "관련 게시물을 확인하고 있어요…";
+    renderPendingMessage();
     if (!(await prepareReading())) return;
     const e = epoch;
     const images = [];
@@ -1085,6 +1119,9 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
         body: { ...body, images },
       });
       cid = r.conversation_id;
+      root
+        .querySelector("[data-pending-request]")
+        ?.removeAttribute("data-pending-request");
       pending = null;
       imageAssets = [];
       $("#growth-question").value = "";
@@ -1112,6 +1149,19 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     const last = [...data.messages].reverse().find((m) => m.result?.growth);
     if (!last) return false;
     cid = data.id;
+    if (
+      pending &&
+      data.messages.some(
+        (m) => m.result?.growth?.request_id === pending.request_id,
+      )
+    ) {
+      pending = null;
+      imageAssets = [];
+      $("#growth-question").value = "";
+      $("#growth-question").disabled = false;
+      $("#growth-chat-files").disabled = false;
+      $("#growth-chat-recover").hidden = true;
+    }
     persist();
     revokePreviews();
     $("#growth-messages").replaceChildren();
@@ -1123,6 +1173,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     $("#growth-observation").value = g.observation_mode;
     renderRecommendation(g);
     renderAttachments();
+    renderPendingMessage();
     show("growth");
     return true;
   }
@@ -1399,6 +1450,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
         true,
       );
     }
+    renderPendingMessage();
     await refresh();
     if (!same(sessionEpoch)) return;
     $("#growth-sync-recover").hidden = !syncPending;
@@ -1406,7 +1458,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
     $("#growth-reading-recover").hidden = !readingPending;
     $("#growth-question").disabled = !!pending;
     $("#growth-chat-files").disabled = !!pending;
-    if (pending) $("#growth-question").value = pending.message;
+    renderPendingMessage();
     if (cid) {
       try {
         await openById(cid);

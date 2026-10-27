@@ -85,7 +85,10 @@ try {
   {
     const reads = [],
       chats = [];
-    let conversation;
+    let conversation, releaseReading;
+    const readingGate = new Promise((resolve) => {
+      releaseReading = resolve;
+    });
     const { page, context, errors } = await fixture(async (r, path) => {
       if (path === "/api/post-readings/select") {
         await r.fulfill({
@@ -110,6 +113,7 @@ try {
       }
       if (path === "/api/post-readings") {
         reads.push(r.request().postDataJSON());
+        await readingGate;
         await r.fulfill({ json: envelope });
         return true;
       }
@@ -254,7 +258,20 @@ try {
       .locator("#growth-question")
       .fill("이 초안과 기존 전기장 게시물을 비교해 줘");
     await page.locator("#growth-chat-send").click();
+    try {
+      await page
+        .locator("#growth-messages .user")
+        .getByText("이 초안과 기존 전기장 게시물을 비교해 줘", { exact: true })
+        .waitFor();
+      assert.equal(await page.locator("#growth-question").inputValue(), "");
+      assert.equal(await page.locator("#growth-welcome").isVisible(), false);
+      assert.equal(await page.locator("#growth-loading").isVisible(), true);
+      await page.screenshot({ path: "/tmp/chat-sending.png" });
+    } finally {
+      releaseReading();
+    }
     await page.getByText("초안을 비교했어요.", { exact: true }).waitFor();
+    assert.equal(await page.locator("#growth-messages .user").count(), 1);
     assert.equal(reads.length, 1);
     assert.equal(chats.length, 1);
     assert.equal(chats[0].images.length, 1);
@@ -387,10 +404,8 @@ try {
     assert.equal(readCalls, 1);
     assert.equal(recoverCalls, 1);
     assert.equal(chatCalls, 0);
-    assert.equal(
-      await page.locator("#growth-question").inputValue(),
-      "전기장 게시물에서 이어갈 주제",
-    );
+    assert.equal(await page.locator("#growth-question").inputValue(), "");
+    assert.equal(await page.locator("#growth-messages .user").count(), 1);
     await context.close();
     console.log(
       "PASS ambiguous reading preserves UUID and recovers before any model retry",
@@ -459,11 +474,9 @@ try {
     assert.equal(JSON.stringify(saved).includes("base64"), false);
     await page.reload();
     await page.getByText("합성 계정", { exact: true }).waitFor();
-    await page.locator("#growth-attachments img").waitFor();
-    assert.equal(
-      await page.locator("#growth-question").inputValue(),
-      "이 초안을 다시 확인해줘",
-    );
+    await page.locator("#growth-messages .user img").waitFor();
+    assert.equal(await page.locator("#growth-question").inputValue(), "");
+    assert.equal(await page.locator("#growth-messages .user").count(), 1);
     await page.locator("#growth-chat-send").click();
     await page.getByText("답변 저장 결과 확인 불가", { exact: true }).waitFor();
     assert.equal(statusChecks, 1);
