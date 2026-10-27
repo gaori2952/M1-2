@@ -324,6 +324,13 @@ try {
       ),
       false,
     );
+    const conversationArea = await page.locator(".growth-thread").boundingBox();
+    assert.ok(
+      conversationArea.height >= 380,
+      "mobile conversation gets at least 380px",
+    );
+    const sendArea = await page.locator("#growth-chat-send").boundingBox();
+    assert.ok(sendArea.y + sendArea.height <= 844, "send stays in view");
     await page.screenshot({
       path: "/tmp/instagram-chat-conversation-mobile.png",
     });
