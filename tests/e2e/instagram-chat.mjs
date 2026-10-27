@@ -177,6 +177,48 @@ try {
     assert.equal(await page.locator("#growth-format").isVisible(), false);
     assert.equal(await page.locator("#growth-metrics").isVisible(), false);
     assert.equal(await page.locator(".growth-prompt-chip").count(), 5);
+    assert.equal(await page.locator("#growth-welcome").isVisible(), true);
+    await page
+      .getByRole("button", {
+        name: "다음엔 어떤 콘텐츠를 올릴까?",
+        exact: true,
+      })
+      .click();
+    assert.match(
+      await page.locator("#growth-question").inputValue(),
+      /다음에 올릴 콘텐츠/,
+    );
+    assert.equal(await page.locator("#growth-messages").textContent(), "");
+    assert.equal(
+      await page
+        .locator("#growth-question")
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+
+    await page.screenshot({ path: "/tmp/instagram-chat-welcome.png" });
+    for (const [width, height] of [
+      [360, 640],
+      [390, 844],
+      [768, 844],
+    ]) {
+      await page.setViewportSize({ width, height });
+      const send = await page.locator("#growth-chat-send").boundingBox();
+      assert.ok(
+        send.y + send.height <= height,
+        `composer visible at ${width}x${height}`,
+      );
+      assert.ok(send.width >= 44 && send.height >= 44);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: "/tmp/instagram-chat-welcome-mobile.png" });
+    await page.setViewportSize({ width: 1280, height: 900 });
     const draft = await page.evaluate(() => {
       const canvas = document.createElement("canvas");
       canvas.width = 200;
@@ -188,12 +230,25 @@ try {
       ctx.fillText("Synthetic draft", 20, 40);
       return canvas.toDataURL("image/png").split(",")[1];
     });
-    await page.locator("#growth-chat-files").setInputFiles({
-      name: "draft.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(draft, "base64"),
-    });
-    await page.locator("#growth-attachments figure").waitFor();
+    await page.locator("#growth-chat-files").setInputFiles(
+      Array.from({ length: 10 }, (_, i) => ({
+        name: i ? `draft-${i}.png` : "draft.png",
+        mimeType: "image/png",
+        buffer: Buffer.from(draft, "base64"),
+      })),
+    );
+    await page.locator("#growth-attachments figure").last().waitFor();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const attachmentSend = await page
+      .locator("#growth-chat-send")
+      .boundingBox();
+    assert.ok(attachmentSend.y + attachmentSend.height <= 844);
+    const thread = await page.locator(".growth-thread").boundingBox();
+    assert.ok(thread.height >= 80, "ten attachments leave room for messages");
+    for (let i = 0; i < 9; i++) {
+      await page.locator("#growth-attachments button").last().click();
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page
       .locator("#growth-question")
       .fill("이 초안과 기존 전기장 게시물을 비교해 줘");
@@ -236,6 +291,14 @@ try {
     await page.reload();
     await page.getByText("초안을 비교했어요.", { exact: true }).waitFor();
     assert.equal(reads.length, 1);
+    assert.equal(await page.locator("#growth-welcome").isVisible(), false);
+    assert.equal(
+      await page
+        .locator("#growth-followup-prompts .growth-prompt-chip")
+        .count(),
+      5,
+    );
+    await page.screenshot({ path: "/tmp/instagram-chat-conversation.png" });
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(
       await page.evaluate(
@@ -243,6 +306,12 @@ try {
       ),
       false,
     );
+    await page.screenshot({
+      path: "/tmp/instagram-chat-conversation-mobile.png",
+    });
+    await page.getByRole("button", { name: "새 대화", exact: true }).click();
+    assert.equal(await page.locator("#growth-welcome").isVisible(), true);
+    assert.equal(await page.locator("#growth-messages").textContent(), "");
     await page.getByRole("button", { name: "로그아웃", exact: true }).click();
     assert.equal(await page.locator(".growth-source-card").count(), 0);
     assert.equal(await page.locator("#growth-attachments figure").count(), 0);

@@ -42,9 +42,16 @@ const link = (label, url) => {
 
 export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
   const past = document.querySelector("#growth-posts-root");
-  root.innerHTML = `<header class="growth-heading"><div><span class="eyebrow">INSTAGRAM MEMORY</span><h1>내 Instagram과 대화하기</h1><p>기존 게시물을 찾고, 새 초안과 비교하고, 다음 콘텐츠로 이어가세요.</p></div><button id="growth-sync" class="secondary">Buffer 새로 불러오기</button></header>
- <div class="growth-connection"><strong id="growth-account">내 계정 연결</strong><details class="growth-account-details"><summary>연결 자료와 성과 요약</summary><dl class="growth-freshness"><div><dt>마지막으로 가져온 시각</dt><dd id="growth-sync-state">로그인 후 확인할 수 있어요.</dd></div><div><dt>최신 게시일</dt><dd id="growth-source-state">—</dd></div><div><dt>성과가 갱신된 시각</dt><dd id="growth-metric-state">—</dd></div></dl><p id="growth-freshness-note" class="growth-source-note"></p><section class="growth-metrics" id="growth-metrics"></section></details><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div>
- <section class="card growth-chat"><div class="section-top"><div><h2>내 게시물로 무엇을 해볼까요?</h2><p id="growth-gpt-state" class="muted">관련 게시물의 확인한 본문과 캡션을 바탕으로 답해요.</p></div><button id="growth-new-chat" class="secondary">새 대화</button></div><div id="growth-prompt-chips" class="growth-prompt-chips"></div><div id="growth-messages" aria-live="polite"></div><p id="growth-loading" role="status" hidden>관련 게시물을 확인하고 있어요…</p><form id="growth-chat-form"><div id="growth-selected-posts" class="growth-selected-posts"></div><div id="growth-attachments" class="growth-attachments"></div><label>질문<textarea id="growth-question" maxlength="4000" rows="3" placeholder="예: 전기장 게시물에서 이미 다룬 내용을 찾고, 이 초안에서 겹치는 부분을 알려줘." required></textarea></label><div class="growth-chat-actions"><label class="growth-attach-button secondary">초안 이미지 첨부<input id="growth-chat-files" type="file" accept="image/png,image/jpeg,image/webp" multiple /></label><button id="growth-browse-posts" type="button" class="secondary">게시물 골라서 질문</button><button id="growth-chat-send" class="primary">AI에게 물어보기</button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-reading-recover" type="button" class="secondary" hidden>본문 읽기 상태 확인</button></div><small class="growth-chat-help">이미지는 최대 10장. 관련 이미지 게시물은 질문마다 최대 1개를 새로 읽고, 읽은 본문은 다시 활용해요. 영상과 확인하지 못한 장면은 추정하지 않아요.</small></form></section>
+  root.innerHTML = `<header class="growth-heading growth-chat-heading"><div><span class="eyebrow">INSTAGRAM MEMORY</span><h1>내 Instagram과 대화하기</h1></div><div class="growth-header-actions"><button id="growth-sync" class="secondary">Buffer 새로 불러오기</button><button id="growth-new-chat" class="secondary">새 대화</button></div></header>
+ <div class="growth-connection"><details class="growth-account-details"><summary><strong id="growth-account">내 계정 연결</strong><span>연결 자료와 성과 요약</span></summary><dl class="growth-freshness"><div><dt>마지막으로 가져온 시각</dt><dd id="growth-sync-state">로그인 후 확인할 수 있어요.</dd></div><div><dt>최신 게시일</dt><dd id="growth-source-state">—</dd></div><div><dt>성과가 갱신된 시각</dt><dd id="growth-metric-state">—</dd></div></dl><p id="growth-freshness-note" class="growth-source-note"></p><section class="growth-metrics" id="growth-metrics"></section></details><button id="growth-sync-recover" class="text-button" hidden>동기화 상태 확인</button></div>
+ <section class="growth-chat" aria-label="Instagram 채팅">
+   <div class="growth-thread">
+     <div id="growth-welcome" class="growth-welcome"><span class="growth-welcome-icon" aria-hidden="true">✳</span><h2>어떤 콘텐츠를 함께 만들어볼까요?</h2><p>내 게시물을 바탕으로 찾고, 비교하고, 다음 아이디어로 이어가세요.</p><div id="growth-welcome-prompts"></div></div>
+     <div id="growth-messages" aria-live="polite"></div>
+     <p id="growth-loading" role="status" hidden>관련 게시물을 확인하고 있어요…</p>
+   </div>
+   <div class="growth-composer-area"><div id="growth-followup-prompts"></div><form id="growth-chat-form"><div id="growth-selected-posts" class="growth-selected-posts"></div><div id="growth-attachments" class="growth-attachments"></div><label class="growth-question-label"><span class="growth-visually-hidden">질문</span><textarea id="growth-question" maxlength="4000" rows="2" placeholder="내 Instagram에 대해 물어보세요" required></textarea></label><div class="growth-chat-actions"><label class="growth-attach-button secondary">초안 이미지 첨부<input id="growth-chat-files" type="file" accept="image/png,image/jpeg,image/webp" multiple /></label><button id="growth-browse-posts" type="button" class="secondary">게시물 선택</button><button id="growth-chat-send" class="primary" aria-label="AI에게 물어보기" title="보내기"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button><button id="growth-chat-recover" type="button" class="secondary" hidden>답변 저장 상태 확인</button><button id="growth-reading-recover" type="button" class="secondary" hidden>본문 읽기 상태 확인</button></div></form><small id="growth-gpt-state" class="growth-chat-help">내 게시물과 초안 이미지로 대화해 보세요.</small></div>
+ </section>
  <details id="growth-timing" class="growth-timing"><summary>게시 시간 비교 (선택)</summary><p class="muted">콘텐츠를 정한 뒤, 내가 올릴 수 있는 시간끼리 비교해요. 콘텐츠 주제 추천과는 별도예요.</p><div class="growth-content-options"><label>형식<select id="growth-format"><option value="carousel">카드뉴스</option><option value="reel">릴스</option><option value="post">단일 게시물</option><option value="story">스토리</option></select></label><label>관심 주제<input id="growth-topic" maxlength="300" /></label></div><div class="growth-workspace"><section class="card growth-planner"><span class="eyebrow">시간 비교</span><h2>언제 올릴지 비교하기</h2><label>비교 기준<select id="growth-observation"><option value="lifetime">현재 누적 성과 · 탐색용</option><option value="seven_day">실제 7일차 부근 관측</option></select></label><label>내가 올릴 수 있는 시간<input id="growth-slot" type="datetime-local" /></label><small id="growth-timezone">계정 시간대: Asia/Seoul · 입력은 내 기기 시간 기준</small><button id="growth-add-slot" class="secondary">가능한 시간 추가</button><div id="growth-slots" class="growth-slots"></div><details><summary>Buffer에 설정된 일정 확인</summary><div id="growth-schedule" class="growth-slots"></div><small>눌러 추가한 시간만 추천 후보에 포함해요.</small></details><button id="growth-preview" class="primary">시간 후보 확인</button><p class="muted">통계와 후보 확인에는 AI를 호출하지 않아요.</p></section>
  <section class="card growth-advice"><span class="eyebrow">후보와 이유</span><h2>왜 이 시간인가요?</h2><div id="growth-recommendation"><p class="growth-empty">가능한 시간을 고르면 내 기록과 비교한 후보가 여기에 표시돼요.</p></div><div id="growth-evidence"></div><details class="growth-limitations"><summary>이 추천이 알 수 있는 범위</summary><p>팔로우 지표가 없는 게시물은 성장 효과를 판단하지 않아요. 누적 성과는 게시 후 경과 시간이 달라요. 시간별 차이가 원인을 증명하거나 팔로워 증가를 보장하지는 않아요.</p></details></section></div>
 </details>
@@ -352,6 +359,11 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       item.append(copy);
     }
     $("#growth-messages").append(item);
+    updateChatMode();
+    requestAnimationFrame(() => {
+      const thread = root.querySelector(".growth-thread");
+      thread.scrollTop = thread.scrollHeight;
+    });
   }
   function renderSlots() {
     const box = $("#growth-slots");
@@ -399,7 +411,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       ? `게시물별 성과 갱신: ${time(s.oldest_metrics_at)} ~ ${time(s.latest_metrics_at)}`
       : "";
     $("#growth-gpt-state").textContent = s?.chat_configured
-      ? "연결한 게시물의 확인된 본문과 캡션을 바탕으로 답해요. 초안을 첨부해 비교할 수도 있어요."
+      ? "내 게시물을 바탕으로 답해요 · 초안 이미지 최대 10장"
       : "AI 연결을 확인해 주세요. 불러온 게시물과 데이터는 계속 확인할 수 있어요.";
     $("#growth-chat-send").disabled = !user || !s?.chat_configured;
     $("#growth-timezone").textContent =
@@ -1197,22 +1209,37 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       persist();
       renderAttachments();
     });
+  const promptChips = node("div", "", "growth-prompt-chips");
+  promptChips.id = "growth-prompt-chips";
+  function updateChatMode() {
+    const hasMessages = $("#growth-messages").childElementCount > 0;
+    root.classList.toggle("has-messages", hasMessages);
+    $("#growth-welcome").hidden = hasMessages;
+    const target = $(
+      hasMessages ? "#growth-followup-prompts" : "#growth-welcome-prompts",
+    );
+    if (promptChips.parentElement !== target) target.append(promptChips);
+  }
+  updateChatMode();
   const prompts = [
-    ["게시물 찾기", "내 게시물 중 전기장을 다룬 내용을 찾아줘."],
     [
-      "초안 비교",
+      "다음엔 어떤 콘텐츠를 올릴까?",
+      "내 기존 게시물의 주제와 내용을 바탕으로 다음에 올릴 콘텐츠를 추천하고 이유도 알려줘.",
+    ],
+    [
+      "이 초안, 기존 글과 겹칠까?",
       "첨부한 초안과 기존 게시물을 비교하고, 겹치는 내용과 새로 보완할 점을 알려줘.",
     ],
     [
-      "다시 활용",
+      "잘된 게시물을 다시 활용하려면?",
       "선택한 게시물을 다른 관점의 새 카드뉴스 초안으로 다시 활용해줘.",
     ],
     [
-      "게시물 피드백",
+      "최근 게시물에서 뭘 개선할까?",
       "선택한 게시물의 확인한 본문과 성과를 보고 다음 제작에 반영할 피드백을 줘.",
     ],
     [
-      "시리즈 기획",
+      "내가 다룬 주제로 시리즈를 만든다면?",
       "내 게시물에서 이미 다룬 내용과 빈 부분을 나눠 다음 시리즈를 기획해줘.",
     ],
   ];
@@ -1244,6 +1271,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       renderSelection();
       renderAttachments();
       $("#growth-messages").replaceChildren();
+      updateChatMode();
       notice("새 대화를 시작했어요.");
     });
   $("#growth-data-open").onclick = () => show("data");
@@ -1312,6 +1340,7 @@ export function mountGrowth(root, { api, getUser, notice, show, loadData }) {
       "growth-data-status",
     ])
       $("#" + id).replaceChildren();
+    updateChatMode();
     $("#growth-chat-files").value = "";
     $("#growth-format").value = "carousel";
     $("#growth-observation").value = "lifetime";
